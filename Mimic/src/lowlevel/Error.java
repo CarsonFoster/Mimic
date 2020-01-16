@@ -6,5 +6,6 @@ public enum Error {
     CLIENT_ACCEPT,
     STREAM_CREATION,
     MESSAGE_RECEIVE,
+    MESSAGE_SEND,
     CONNECT;
 }
