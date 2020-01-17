@@ -51,6 +51,9 @@ public class ServerThread extends Thread {
         }
         send("200 OK");
         Server.usernames.put(id, username);
+        send("000 NONE");
+        send("000 NONE");
+        send("000 NONE");
     }
     
     private Error send(String msg) {
