@@ -2,6 +2,7 @@ package lowlevel;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
@@ -9,6 +10,8 @@ public class Server {
     public static boolean quit = false;
     protected static ConcurrentHashMap<Integer, Error> threadErrors = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> usernames = new ConcurrentHashMap<>();
+    protected static ConcurrentHashMap<Integer, String> channels = new ConcurrentHashMap<>();
+    protected static ArrayList<String> channelsList = new ArrayList<>();
     
     public static Error start() {
         ServerSocket server = null;
@@ -21,6 +24,8 @@ public class Server {
             return Error.SERVER_CREATION;
         }
         System.out.println("Server created.");
+        // initilization and config file here
+        channelsList.add("#general"); // change later
         while (!quit) {
             try {
                 client = server.accept();
@@ -39,6 +44,14 @@ public class Server {
         // other code TBD
         return ok;
     }
+    
+    protected static String defaultChannel() {
+        return "#general"; // subject to change
+    }
+    
+    protected static boolean checkChannel(int id, String channel) {
+        return channelsList.contains(channel);
+    } 
     
 }
 
@@ -63,4 +76,9 @@ Send message:
 
 Receive message:
 1. S sends "USER " and the username of the sender and then " MSG " and the message
+
+Exit connection:
+1. C sends "BYE"
+2. S ends "BYE"
+3. sockets deconstruct
 */

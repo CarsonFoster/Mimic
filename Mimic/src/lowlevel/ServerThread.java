@@ -9,6 +9,7 @@ public class ServerThread extends Thread {
     private int id;
     private BufferedReader in;
     private DataOutputStream out;
+    private volatile boolean running = true;
     
     public ServerThread(Socket c) {
         super();
@@ -51,9 +52,36 @@ public class ServerThread extends Thread {
         }
         send("200 OK");
         Server.usernames.put(id, username);
+        send(Server.channelsList.stream().reduce("", (x, y) -> x + y + " ") + "DEFAULT " + Server.defaultChannel());
         send("000 NONE");
         send("000 NONE");
         send("000 NONE");
+        Server.channels.put(id, Server.defaultChannel());
+        BufferedReaderListener brl = new BufferedReaderListener(in, this);
+        brl.addBehavior((msg, st) -> {
+            String[] arr = msg.split(" ");
+            String first = arr[0];
+            switch (first) {
+                case "MSG": 
+                    System.out.println("Message from " + Server.usernames.get(id) + " in channel " + Server.channels.get(id) + ": " + msg.substring(4));
+                    break;
+                case "\\channel": 
+                    String channel = arr[1];
+                    if (arr.length > 2 || !Server.checkChannel(id, channel))
+                        send("409 CONFLICT");
+                    else {
+                        Server.channels.put(id, channel);
+                        send("200 OK");
+                    }
+                    break;
+                case "BYE": 
+                    send("BYE");
+                    st.shutdown();
+                    break;
+            }
+        });
+        new Thread(brl).start();
+        while (running) {}
     }
     
     private Error send(String msg) {
@@ -76,5 +104,15 @@ public class ServerThread extends Thread {
             Server.threadErrors.put(id, Error.MESSAGE_RECEIVE);
             return null;
         }
+    }
+    
+    public synchronized void shutdown() {
+        try {
+            in.close();
+            out.close();
+            client.close();
+        } catch (IOException e) {}
+        Server.threadErrors.remove(id);
+        running = false;
     }
 }

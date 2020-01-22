@@ -37,7 +37,7 @@ public class Client {
         return Error.NONE;
     }
     
-    private Error send(String msg) {
+    public Error send(String msg) {
         if (!msg.endsWith("\n")) msg += "\n";
         try {
             out.writeBytes(msg);
@@ -48,7 +48,7 @@ public class Client {
         return Error.NONE;
     }
     
-    private String receive() {
+    public String receive() {
         try {
             return in.readLine().trim();
         } catch (IOException e) {
