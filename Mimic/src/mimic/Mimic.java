@@ -16,8 +16,9 @@ public class Mimic {
         System.out.println(c.receive()); // 000
         System.out.println(c.receive()); // 000
         c.send("MSG this is a test");
+        System.out.println(c.changeChannel("#welcome"));
         c.send("MSG test");
-        c.send("BYE");
+        c.exit();
     }
     
 }

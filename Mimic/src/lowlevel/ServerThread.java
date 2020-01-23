@@ -4,17 +4,18 @@ import java.net.*;
 import java.io.*;
 
 public class ServerThread extends Thread {
-    private static int idCounter = 0;
+    protected static int numThreads = 0;
     private Socket client;
     private int id;
     private BufferedReader in;
+    private BufferedReaderListener brl;
     private DataOutputStream out;
     private volatile boolean running = true;
     
     public ServerThread(Socket c) {
         super();
         client = c;
-        id = idCounter++;
+        id = numThreads++;
         Server.threadErrors.put(id, Error.NONE);
         System.out.println("ServerThread " + id + " started.");
     }
@@ -57,13 +58,14 @@ public class ServerThread extends Thread {
         send("000 NONE");
         send("000 NONE");
         Server.channels.put(id, Server.defaultChannel());
-        BufferedReaderListener brl = new BufferedReaderListener(in, this);
+        brl = new BufferedReaderListener(in, this);
         brl.addBehavior((msg, st) -> {
             String[] arr = msg.split(" ");
             String first = arr[0];
             switch (first) {
                 case "MSG": 
                     System.out.println("Message from " + Server.usernames.get(id) + " in channel " + Server.channels.get(id) + ": " + msg.substring(4));
+                    Server.messages.get(Server.channels.get(id)).add("USER " + Server.usernames.get(id) + " " + msg);
                     break;
                 case "\\channel": 
                     String channel = arr[1];
@@ -82,6 +84,7 @@ public class ServerThread extends Thread {
         });
         new Thread(brl).start();
         while (running) {}
+        System.out.println("exiting thread " + id);
     }
     
     private Error send(String msg) {
@@ -107,6 +110,7 @@ public class ServerThread extends Thread {
     }
     
     public synchronized void shutdown() {
+        brl.running = false;
         try {
             in.close();
             out.close();

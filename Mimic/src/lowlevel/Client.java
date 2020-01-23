@@ -2,13 +2,13 @@ package lowlevel;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 public class Client {
     private BufferedReader in;
     private DataOutputStream out;
+    private Socket client;
     public Error start(String ip) {
-        Socket client;
-        
         try {
             client = new Socket(ip, Server.port);
         } catch (IOException e) {
@@ -57,7 +57,44 @@ public class Client {
         }
     }
     
-    private Error setUsername(gui.Client c) {
+    public ArrayList<String> getChannels() {
+        String line = receive();
+        String[] channels = line.split(" ");
+        boolean def = false;
+        
+        ArrayList<String> c = new ArrayList<>();
+        
+        for (String channel : channels) {
+            if (channel.equals("DEFAULT")) {
+                def = true;
+                continue;
+            }
+            if (def)
+                c.add(0, channel);
+            else
+                c.add(channel);
+        }
+        return c;
+    }
+    
+    public Error changeChannel(String channel) {
+        send("\\channel " + channel);
+        String line = receive();
+        return (line.contains("200") ? Error.NONE : Error.DECLINED);
+    }
+    
+    public void exit() {
+        send("BYE");
+        receive();
+        System.out.println("Exiting client.");
+        try {
+            in.close();
+            out.close();
+            client.close();
+        } catch (IOException e2) {}
+    }
+    
+    public Error setUsername(gui.Client c) {
         String name, res = "";
         Error e;
         boolean ok = false;

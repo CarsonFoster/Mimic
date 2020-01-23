@@ -3,7 +3,7 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 public class Server {
     public final static int port = 6464;
@@ -11,6 +11,7 @@ public class Server {
     protected static ConcurrentHashMap<Integer, Error> threadErrors = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> usernames = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> channels = new ConcurrentHashMap<>();
+    protected static ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> messages = new ConcurrentHashMap<>();
     protected static ArrayList<String> channelsList = new ArrayList<>();
     
     public static Error start() {
@@ -26,6 +27,12 @@ public class Server {
         System.out.println("Server created.");
         // initilization and config file here
         channelsList.add("#general"); // change later
+        channelsList.add("#welcome");
+        
+        for (String channel : channelsList) {
+            messages.put(channel, new ConcurrentLinkedQueue<String>());
+        }
+        
         while (!quit) {
             try {
                 client = server.accept();

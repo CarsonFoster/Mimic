@@ -7,5 +7,6 @@ public enum Error {
     STREAM_CREATION,
     MESSAGE_RECEIVE,
     MESSAGE_SEND,
+    DECLINED,
     CONNECT;
 }
