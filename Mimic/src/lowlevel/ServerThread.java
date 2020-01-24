@@ -6,9 +6,10 @@ import java.io.*;
 public class ServerThread extends Thread {
     protected static int numThreads = 0;
     private Socket client;
-    private int id;
+    public int id;
     private BufferedReader in;
     private BufferedReaderListener brl;
+    private MessageListener ml;
     private DataOutputStream out;
     private volatile boolean running = true;
     
@@ -17,6 +18,7 @@ public class ServerThread extends Thread {
         client = c;
         id = numThreads++;
         Server.threadErrors.put(id, Error.NONE);
+        Server.indices.put(id, 0);
         System.out.println("ServerThread " + id + " started.");
     }
     
@@ -65,7 +67,9 @@ public class ServerThread extends Thread {
             switch (first) {
                 case "MSG": 
                     System.out.println("Message from " + Server.usernames.get(id) + " in channel " + Server.channels.get(id) + ": " + msg.substring(4));
-                    Server.messages.get(Server.channels.get(id)).add("USER " + Server.usernames.get(id) + " " + msg);
+                    synchronized (Server.lock) {
+                        Server.messages.get(Server.channels.get(id)).add("USER " + Server.usernames.get(id) + " " + msg);
+                    }
                     break;
                 case "\\channel": 
                     String channel = arr[1];
@@ -82,9 +86,22 @@ public class ServerThread extends Thread {
                     break;
             }
         });
+        ml = new MessageListener(this);
+        ml.addBehavior((st) -> {
+            int index = Server.indices.get(id);
+            String channel = Server.channels.get(id);
+            String message = Server.messages.get(channel).get(index);
+            send(message);
+            Server.indices.put(id, index + 1);
+            if (Server.indices.values().stream().mapToInt(x -> x).max().getAsInt() > 0) { // TODO: fix it so it knows which ones are in what channels
+                synchronized (Server.lock) {
+                    Server.messages.get(channel).remove(0);
+                }
+            }
+        });
         new Thread(brl).start();
         while (running) {}
-        System.out.println("exiting thread " + id);
+        System.out.println("Exiting thread " + id);
     }
     
     private Error send(String msg) {

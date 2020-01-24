@@ -3,6 +3,8 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.*;
 
 public class Server {
@@ -11,8 +13,10 @@ public class Server {
     protected static ConcurrentHashMap<Integer, Error> threadErrors = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> usernames = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> channels = new ConcurrentHashMap<>();
-    protected static ConcurrentHashMap<String, ConcurrentLinkedQueue<String>> messages = new ConcurrentHashMap<>();
+    protected static ConcurrentHashMap<String, List<String>> messages = new ConcurrentHashMap<>();
+    protected static ConcurrentHashMap<Integer, Integer> indices = new ConcurrentHashMap<>(); // next to read
     protected static ArrayList<String> channelsList = new ArrayList<>();
+    protected final static Object lock = new Object();
     
     public static Error start() {
         ServerSocket server = null;
@@ -30,7 +34,7 @@ public class Server {
         channelsList.add("#welcome");
         
         for (String channel : channelsList) {
-            messages.put(channel, new ConcurrentLinkedQueue<String>());
+            messages.put(channel, Collections.synchronizedList(new ArrayList<String>()));
         }
         
         while (!quit) {
