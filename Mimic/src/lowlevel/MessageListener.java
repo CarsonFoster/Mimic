@@ -1,6 +1,9 @@
 package lowlevel;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.*;
 
 public class MessageListener implements Runnable {
@@ -21,8 +24,10 @@ public class MessageListener implements Runnable {
     public void run() {
         while (running) {
             int l = Server.messages.get(Server.channels.get(st.id)).size();
-            if (l != length) {
+            if (l > length) {
                 r.accept(st);
+                length++;
+            } else if (l < length) {
                 length = l;
             }
         }

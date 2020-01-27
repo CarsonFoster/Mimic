@@ -13,10 +13,12 @@ public class Server {
     protected static ConcurrentHashMap<Integer, Error> threadErrors = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> usernames = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> channels = new ConcurrentHashMap<>();
+    protected static ConcurrentHashMap<String, List<Integer>> idsByChannel = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<String, List<String>> messages = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, Integer> indices = new ConcurrentHashMap<>(); // next to read
     protected static ArrayList<String> channelsList = new ArrayList<>();
     protected final static Object lock = new Object();
+    protected final static Object idsLock = new Object();
     
     public static Error start() {
         ServerSocket server = null;
@@ -35,8 +37,27 @@ public class Server {
         
         for (String channel : channelsList) {
             messages.put(channel, Collections.synchronizedList(new ArrayList<String>()));
+            idsByChannel.put(channel, Collections.synchronizedList(new ArrayList<>()));
         }
-        
+        new Thread(() -> {
+            while (!Server.quit) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {}
+                synchronized (Server.lock) {
+                    for (String channel : Server.idsByChannel.keySet()) {
+                        List<Integer> ids = Server.idsByChannel.get(channel);
+                        if (ids.stream().mapToInt(x -> Server.indices.get(x)).min().getAsInt() > 0) {
+                            Server.messages.get(channel).remove(0);
+                            for (int id : ids) {
+                                int index = Server.indices.get(id);
+                                Server.indices.put(id, index - 1); // all should be > 0
+                            }
+                        }
+                    }
+                }
+            }
+        }).start();
         while (!quit) {
             try {
                 client = server.accept();

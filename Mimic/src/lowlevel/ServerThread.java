@@ -76,6 +76,10 @@ public class ServerThread extends Thread {
                     if (arr.length > 2 || !Server.checkChannel(id, channel))
                         send("409 CONFLICT");
                     else {
+                        synchronized (Server.idsLock) {
+                            Server.idsByChannel.get(Server.channels.get(id)).remove(id);
+                            Server.idsByChannel.get(channel).add(id);
+                        }
                         Server.channels.put(id, channel);
                         send("200 OK");
                     }
@@ -91,15 +95,12 @@ public class ServerThread extends Thread {
             int index = Server.indices.get(id);
             String channel = Server.channels.get(id);
             String message = Server.messages.get(channel).get(index);
-            send(message);
+            if (!message.startsWith("USER " + Server.usernames.get(st.id)))
+                send(message);
             Server.indices.put(id, index + 1);
-            if (Server.indices.values().stream().mapToInt(x -> x).max().getAsInt() > 0) { // TODO: fix it so it knows which ones are in what channels
-                synchronized (Server.lock) {
-                    Server.messages.get(channel).remove(0);
-                }
-            }
         });
         new Thread(brl).start();
+        new Thread(ml).start();
         while (running) {}
         System.out.println("Exiting thread " + id);
     }
