@@ -60,6 +60,7 @@ public class ServerThread extends Thread {
         send("000 NONE");
         send("000 NONE");
         Server.channels.put(id, Server.defaultChannel());
+        Server.idsByChannel.get(Server.defaultChannel()).add(id);
         brl = new BufferedReaderListener(in, this);
         brl.addBehavior((msg, st) -> {
             String[] arr = msg.split(" ");

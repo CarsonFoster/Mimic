@@ -42,12 +42,12 @@ public class Server {
         new Thread(() -> {
             while (!Server.quit) {
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(10000);
                 } catch (InterruptedException e) {}
                 synchronized (Server.lock) {
                     for (String channel : Server.idsByChannel.keySet()) {
                         List<Integer> ids = Server.idsByChannel.get(channel);
-                        if (ids.stream().mapToInt(x -> Server.indices.get(x)).min().getAsInt() > 0) {
+                        if (ids.size() > 0 && ids.stream().mapToInt(x -> Server.indices.get(x)).min().getAsInt() > 0) {
                             Server.messages.get(channel).remove(0);
                             for (int id : ids) {
                                 int index = Server.indices.get(id);

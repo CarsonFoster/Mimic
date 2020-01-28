@@ -1,20 +1,30 @@
 package mimic;
 
+import java.util.Scanner;
 import lowlevel.Client;
 import lowlevel.Server;
 
 public class Mimic {
     
+    private static class ConsoleClient implements gui.Client {
+        private Scanner in;
+        protected ConsoleClient() {
+            in = new Scanner(System.in);
+        }   
+        
+        public void errorUsername() {
+            System.out.println("That doesn't work.");
+        }
+        
+        public String promptForUsername() {
+            System.out.print("Enter a username: ");
+            return in.nextLine().trim();
+        }
+    }
+    
     public static void main(String[] args) {
         new Thread(() -> Server.start()).start();
-        Client c = new Client();
-        c.start("127.0.0.1");
-        c.send("raveneus");
-        System.out.println(c.receive()); // 200 ok
-        System.out.println(c.receive()); // channel list
-        System.out.println(c.receive()); // 000
-        System.out.println(c.receive()); // 000
-        System.out.println(c.receive()); // 000
+        Client c = Client.initiate("localhost", new ConsoleClient());
         c.send("MSG this is a test");
         System.out.println(c.changeChannel("#welcome"));
         c.send("MSG test");

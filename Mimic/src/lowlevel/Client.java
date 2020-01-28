@@ -8,6 +8,36 @@ public class Client {
     private BufferedReader in;
     private DataOutputStream out;
     private Socket client;
+    protected Info info;
+    
+    public static class Info {
+        public String username, channel, host;
+        public ArrayList<String> channels, additional;
+    }
+    
+    public static Client initiate(String host, gui.Client c) {
+        Client cl = new Client();
+        Info i = new Info();
+        i.host = host;
+        cl.start(host);
+        Object[] ret = cl.setUsername(c);
+        if (ret.length < 1) return null; // error, no set username
+        i.username = (String)ret[1];
+        ArrayList<String> channels = cl.getChannels();
+        if (channels == null) return null;
+        i.channels = channels;
+        i.channel = channels.get(0);
+        ArrayList<String> additional = new ArrayList<String>();
+        for (int j = 0; j < 3; j++) {
+            String line = cl.receive();
+            if (line == null) return null;
+            additional.add(line);
+        }
+        i.additional = additional;
+        cl.info = i;
+        return cl;
+    }
+    
     public Error start(String ip) {
         try {
             client = new Socket(ip, Server.port);
@@ -59,6 +89,7 @@ public class Client {
     
     public ArrayList<String> getChannels() {
         String line = receive();
+        if (line == null) return null;
         String[] channels = line.split(" ");
         boolean def = false;
         
@@ -69,9 +100,10 @@ public class Client {
                 def = true;
                 continue;
             }
-            if (def)
+            if (def) {
                 c.add(0, channel);
-            else
+                def = false;
+            } else
                 c.add(channel);
         }
         return c;
@@ -94,21 +126,22 @@ public class Client {
         } catch (IOException e2) {}
     }
     
-    public Error setUsername(gui.Client c) {
+    public Object[] setUsername(gui.Client c) { // 0 = error, 1, if there, = username
         String name, res = "";
         Error e;
         boolean ok = false;
         do {
-            if (res == null) return Error.MESSAGE_RECEIVE; 
+            if (res == null) return new Object[] {Error.MESSAGE_RECEIVE}; 
             name = c.promptForUsername();
             e = send(name);
-            if (e != Error.NONE) return e;
+            if (e != Error.NONE) return new Object[] {e};
             res = receive();
             if (!res.equals("200 OK"))
                 c.errorUsername();
             else
                 ok = true;
         } while (!ok);
-        return Error.NONE;
+        return new Object[] {Error.NONE, name};
     }
+    
 }
