@@ -3,11 +3,13 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class Client {
     private BufferedReader in;
     private DataOutputStream out;
     private Socket client;
+    private BufferedReaderListener brl;
     protected Info info;
     
     public static class Info {
@@ -15,7 +17,7 @@ public class Client {
         public ArrayList<String> channels, additional;
     }
     
-    public static Client initiate(String host, gui.Client c) {
+    public static Client initiate(String host, gui.Client c, Consumer<String> r) {
         Client cl = new Client();
         Info i = new Info();
         i.host = host;
@@ -35,7 +37,19 @@ public class Client {
         }
         i.additional = additional;
         cl.info = i;
+        
+        cl.setBehavior(r);
+        cl.startBRL();
+        
         return cl;
+    }
+    
+    public void setBehavior(Consumer<String> r) {
+        brl.addBehavior(r);
+    }
+    
+    public void startBRL() {
+        new Thread(brl, "BufferedListener Client: " + info.username).start();
     }
     
     public Error start(String ip) {
@@ -64,6 +78,7 @@ public class Client {
             } catch (IOException e2) {}
             return Error.MESSAGE_RECEIVE;
         }*/
+        brl = new BufferedReaderListener(in);
         return Error.NONE;
     }
     
@@ -116,6 +131,7 @@ public class Client {
     }
     
     public void exit() {
+        brl.running = false;
         send("BYE");
         receive();
         System.out.println("Exiting client.");

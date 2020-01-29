@@ -16,6 +16,7 @@ public class Server {
     protected static ConcurrentHashMap<String, List<Integer>> idsByChannel = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<String, List<String>> messages = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, Integer> indices = new ConcurrentHashMap<>(); // next to read
+    protected static ConcurrentHashMap<Integer, Integer> ready = new ConcurrentHashMap<>();
     protected static ArrayList<String> channelsList = new ArrayList<>();
     protected final static Object lock = new Object();
     protected final static Object idsLock = new Object();
@@ -57,7 +58,7 @@ public class Server {
                     }
                 }
             }
-        }).start();
+        }, "Remover Guy").start();
         while (!quit) {
             try {
                 client = server.accept();

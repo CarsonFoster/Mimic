@@ -5,16 +5,14 @@ import java.util.function.*;
 
 public class BufferedReaderListener implements Runnable {
     private BufferedReader in;
-    private ServerThread st;
-    private BiConsumer<String, ServerThread> r;
+    private Consumer<String> r;
     public volatile boolean running = true;
     
-    public BufferedReaderListener(BufferedReader i, ServerThread s) {
+    public BufferedReaderListener(BufferedReader i) {
         in = i;
-        st = s;
     }
     
-    public void addBehavior(BiConsumer<String, ServerThread> run) {
+    public void addBehavior(Consumer<String> run) {
         r = run;
     }
     
@@ -22,7 +20,7 @@ public class BufferedReaderListener implements Runnable {
         while (running) {
             try {
                 if (in.ready()) {
-                    r.accept(in.readLine().trim(), st);
+                    r.accept(in.readLine().trim());
                 }
             } catch (IOException E) {}
         }

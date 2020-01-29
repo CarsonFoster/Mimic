@@ -8,10 +8,10 @@ public class ServerThread extends Thread {
     private Socket client;
     public int id;
     private BufferedReader in;
-    private BufferedReaderListener brl;
+    private BufferedReaderListenerServer brl;
     private MessageListener ml;
     private DataOutputStream out;
-    private volatile boolean running = true;
+    public volatile boolean running = true;
     
     public ServerThread(Socket c) {
         super();
@@ -19,7 +19,9 @@ public class ServerThread extends Thread {
         id = numThreads++;
         Server.threadErrors.put(id, Error.NONE);
         Server.indices.put(id, 0);
+        Server.ready.put(id, 0);
         System.out.println("ServerThread " + id + " started.");
+        setName("ServerThread " + id);
     }
     
     @Override
@@ -61,19 +63,23 @@ public class ServerThread extends Thread {
         send("000 NONE");
         Server.channels.put(id, Server.defaultChannel());
         Server.idsByChannel.get(Server.defaultChannel()).add(id);
-        brl = new BufferedReaderListener(in, this);
+        brl = new BufferedReaderListenerServer(in, this);
         brl.addBehavior((msg, st) -> {
             String[] arr = msg.split(" ");
             String first = arr[0];
             switch (first) {
                 case "MSG": 
                     System.out.println("Message from " + Server.usernames.get(id) + " in channel " + Server.channels.get(id) + ": " + msg.substring(4));
+                    String channel = Server.channels.get(id);
                     synchronized (Server.lock) {
-                        Server.messages.get(Server.channels.get(id)).add("USER " + Server.usernames.get(id) + " " + msg);
+                        Server.messages.get(channel).add("USER " + Server.usernames.get(id) + " " + msg);
+                        synchronized (Server.idsLock) {
+                            Server.idsByChannel.get(channel).stream().filter(x -> x != st.id).forEach(x -> Server.ready.put(x, Server.ready.get(x) + 1));
+                        }
                     }
                     break;
                 case "\\channel": 
-                    String channel = arr[1];
+                    channel = arr[1];
                     if (arr.length > 2 || !Server.checkChannel(id, channel))
                         send("409 CONFLICT");
                     else {
@@ -100,8 +106,12 @@ public class ServerThread extends Thread {
                 send(message);
             Server.indices.put(id, index + 1);
         });
-        new Thread(brl).start();
-        new Thread(ml).start();
+        Thread bt = new Thread(brl);
+        Thread mt = new Thread(ml);
+        bt.setName("BufferListener " + id);
+        mt.setName("MessageListener " + id);
+        bt.start();
+        mt.start();
         while (running) {}
         System.out.println("Exiting thread " + id);
     }
@@ -129,13 +139,16 @@ public class ServerThread extends Thread {
     }
     
     public synchronized void shutdown() {
-        brl.running = false;
+        running = false;
         try {
             in.close();
             out.close();
             client.close();
         } catch (IOException e) {}
         Server.threadErrors.remove(id);
-        running = false;
+        Server.channels.remove(id);
+        Server.indices.remove(id);
+        Server.usernames.remove(id);
+        Server.ready.remove(id);
     }
 }

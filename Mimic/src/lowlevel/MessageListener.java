@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.function.*;
 
 public class MessageListener implements Runnable {
-    private ServerThread st;
+    private final ServerThread st;
     private Consumer<ServerThread> r;
-    public volatile boolean running = true;
+    //public volatile boolean running = true;
     private int length = 0;
     
     public MessageListener(ServerThread s) {
@@ -22,13 +22,18 @@ public class MessageListener implements Runnable {
     }
     
     public void run() {
-        while (running) {
-            int l = Server.messages.get(Server.channels.get(st.id)).size();
+        while (st.running) {
+            /*int l = Server.messages.get(Server.channels.get(st.id)).size();
             if (l > length) {
                 r.accept(st);
                 length++;
             } else if (l < length) {
                 length = l;
+            }*/
+            int ready = Server.ready.get(st.id);
+            if (ready > 0) {
+                r.accept(st);
+                Server.ready.put(st.id, Server.ready.get(st.id) - 1); // check again in case it changed
             }
         }
     }
