@@ -11,6 +11,7 @@ public class ServerThread extends Thread {
     private BufferedReaderListenerServer brl;
     private MessageListener ml;
     private DataOutputStream out;
+    private Thread bt, mt;
     public volatile boolean running = true;
     
     public ServerThread(Socket c) {
@@ -106,8 +107,8 @@ public class ServerThread extends Thread {
                 send(message);
             Server.indices.put(id, index + 1);
         });
-        Thread bt = new Thread(brl);
-        Thread mt = new Thread(ml);
+        bt = new Thread(brl);
+        mt = new Thread(ml);
         bt.setName("BufferListener " + id);
         mt.setName("MessageListener " + id);
         bt.start();
@@ -140,6 +141,8 @@ public class ServerThread extends Thread {
     
     public synchronized void shutdown() {
         running = false;
+        bt.interrupt();
+        mt.interrupt();
         try {
             in.close();
             out.close();

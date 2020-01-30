@@ -10,6 +10,7 @@ public class Client {
     private DataOutputStream out;
     private Socket client;
     private BufferedReaderListener brl;
+    private Thread brlthread;
     protected Info info;
     
     public static class Info {
@@ -49,7 +50,8 @@ public class Client {
     }
     
     public void startBRL() {
-        new Thread(brl, "BufferedListener Client: " + info.username).start();
+        brlthread = new Thread(brl, "BufferedListener Client: " + info.username);
+        brlthread.start();
     }
     
     public Error start(String ip) {
@@ -95,7 +97,9 @@ public class Client {
     
     public String receive() {
         try {
-            return in.readLine().trim();
+            String str = in.readLine();
+            if (str != null) str = str.trim();
+            return str;
         } catch (IOException e) {
             System.out.println("Client Exception: RECEIVE");
             return null;
@@ -132,6 +136,7 @@ public class Client {
     
     public void exit() {
         brl.running = false;
+        brlthread.interrupt();
         send("BYE");
         receive();
         System.out.println("Exiting client.");

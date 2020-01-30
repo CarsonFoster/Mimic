@@ -30,6 +30,9 @@ public class MessageListener implements Runnable {
             } else if (l < length) {
                 length = l;
             }*/
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
             int ready = Server.ready.get(st.id);
             if (ready > 0) {
                 r.accept(st);

@@ -24,8 +24,10 @@ public class Mimic {
     
     public static void main(String[] args) {
         new Thread(() -> Server.start()).start();
-        Client c = Client.initiate("localhost", new ConsoleClient(), str -> {System.out.println(str);});
+        Client c = Client.initiate("localhost", new ConsoleClient(), str -> {System.out.println("c" + str);});
         c.send("MSG this is a test");
+        Client b = Client.initiate("localhost", new ConsoleClient(), str -> {System.out.println("b" + str);});
+        b.changeChannel("#welcome");
         c.changeChannel("#welcome");
         c.send("MSG test");
         c.exit();
