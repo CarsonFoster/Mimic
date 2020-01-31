@@ -149,6 +149,7 @@ public class ServerThread extends Thread {
             client.close();
         } catch (IOException e) {}
         Server.threadErrors.remove(id);
+        Server.idsByChannel.get(Server.channels.get(id)).remove((Integer)id);
         Server.channels.remove(id);
         Server.indices.remove(id);
         Server.usernames.remove(id);

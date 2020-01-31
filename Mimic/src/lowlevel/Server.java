@@ -46,13 +46,27 @@ public class Server {
                     Thread.sleep(10000);
                 } catch (InterruptedException e) {}
                 synchronized (Server.lock) {
-                    for (String channel : Server.idsByChannel.keySet()) {
-                        List<Integer> ids = Server.idsByChannel.get(channel);
-                        if (ids.size() > 0 && ids.stream().mapToInt(x -> Server.indices.get(x)).min().getAsInt() > 0) {
-                            Server.messages.get(channel).remove(0);
-                            for (int id : ids) {
-                                int index = Server.indices.get(id);
-                                Server.indices.put(id, index - 1); // all should be > 0
+                    synchronized (Server.idsLock) {
+                        for (String channel : Server.idsByChannel.keySet()) {
+                            List<Integer> ids = Server.idsByChannel.get(channel);
+                            boolean size = ids.size() > 0;
+                            boolean gtz = false;
+                            if (size) {
+                                ids.stream()
+                                        .forEach(x -> System.out.println(x + " : " + Server.indices.get(x)));
+                                gtz = ids.stream()
+                                        .mapToInt(
+                                                x -> Server.indices.get(x))
+                                        .min()
+                                        .getAsInt() > 0;
+                            }
+
+                            if (size && gtz) {
+                                Server.messages.get(channel).remove(0);
+                                for (int id : ids) {
+                                    int index = Server.indices.get(id);
+                                    Server.indices.put(id, index - 1); // all should be > 0
+                                }
                             }
                         }
                     }
