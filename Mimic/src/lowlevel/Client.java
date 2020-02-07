@@ -18,6 +18,14 @@ public class Client {
         public ArrayList<String> channels, additional;
     }
     
+    public static String getLocalIP() {
+        try {
+            return Inet4Address.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            return null;
+        }
+    }
+    
     public static Client initiate(String host, gui.Client c, Consumer<String> r) {
         Client cl = new Client();
         Info i = new Info();

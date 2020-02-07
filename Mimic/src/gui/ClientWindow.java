@@ -7,6 +7,8 @@ import javax.swing.*;
 public class ClientWindow extends JFrame implements Client{
 
     private static int WIDTH, HEIGHT;
+    private boolean SERVER_FLAGS = false;
+    private String ip = "";
     /*private Painter p;
     
     private interface Painter {
@@ -39,13 +41,12 @@ public class ClientWindow extends JFrame implements Client{
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
-    private static void constructChannelList(Container pane) {
-        String[] abcs = new String[52];
-        for (int i = 0; i < 26; i++) {
-            abcs[i*2] = "" + (char)(97 + i);
-            abcs[i*2 + 1] = "" + (char)(65 + i);
-        }
-        JList<String> list = new JList<>(abcs);
+    private static void constructTitle(Container pane) {
+        
+    }
+    
+    private static void constructChannelList(Container pane, String[] l) {
+        JList<String> list = new JList<>(l);
         JScrollPane scroll = new JScrollPane(list);
         scroll.setMaximumSize(new Dimension(WIDTH / 4, HEIGHT)); //TODO: fix this; it doesn't work, but also not high priority
         GridBagConstraints c = new GridBagConstraints();
@@ -62,11 +63,23 @@ public class ClientWindow extends JFrame implements Client{
     private static void constructMessages(Container pane) {
         JTextArea a = new JTextArea();
         a.setEditable(false);
+        JPanel p = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Dimension s = getSize();
+                g.setColor(Color.white);
+                g.fillRect(0, 0, (int)s.getWidth(), (int)s.getHeight());
+                g.setColor(Color.black);
+                g.drawRect(0, 0, (int)s.getWidth(), (int)s.getHeight());
+            }
+        };
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 1; c.gridy = 1;
         c.gridwidth = GridBagConstraints.REMAINDER; c.gridheight = GridBagConstraints.RELATIVE;
         c.weightx = 1; c.weighty = 1;
         c.fill = GridBagConstraints.BOTH;
+        pane.add(p, c);
         pane.add(a, c);
     }
     
@@ -86,7 +99,7 @@ public class ClientWindow extends JFrame implements Client{
         pane.add(b, c);
     }
     
-    public ClientWindow() {
+    public ClientWindow(boolean server) {
         super("Mimic");
         Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
         WIDTH = (int)(screensize.getWidth() * 3.0/7.0);
@@ -96,7 +109,17 @@ public class ClientWindow extends JFrame implements Client{
         //setLocationRelativeTo(null);
         Container pane = getContentPane();
         pane.setLayout(new GridBagLayout());
-        constructChannelList(pane);
+        if (server) {
+            SERVER_FLAGS = true;
+            ip = lowlevel.Client.getLocalIP();
+        }
+        constructTitle(pane);
+        String[] abcs = new String[52];
+        for (int i = 0; i < 26; i++) {
+            abcs[i*2] = "" + (char)(97 + i);
+            abcs[i*2 + 1] = "" + (char)(65 + i);
+        }
+        constructChannelList(pane, abcs);
         constructMessages(pane);
         constructYourMessage(pane);
         pack();
@@ -104,7 +127,7 @@ public class ClientWindow extends JFrame implements Client{
     }
     
     public static void main(String[] args) {
-        ClientWindow cw = new ClientWindow();
+        ClientWindow cw = new ClientWindow(false);
         //cw.promptForUsername();
         //cw.errorUsername();
     }
