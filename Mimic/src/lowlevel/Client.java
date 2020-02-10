@@ -30,7 +30,7 @@ public class Client {
         Client cl = new Client();
         Info i = new Info();
         i.host = host;
-        cl.start(host);
+        if (cl.start(host) != Error.NONE) return null;
         Object[] ret = cl.setUsername(c);
         if (ret.length < 1) return null; // error, no set username
         i.username = (String)ret[1];

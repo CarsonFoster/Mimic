@@ -89,6 +89,7 @@ public class ServerThread extends Thread {
                             Server.idsByChannel.get(channel).add(id);
                         }
                         Server.channels.put(id, channel);
+                        Server.indices.put(id, 0);
                         send("200 OK");
                     }
                     break;

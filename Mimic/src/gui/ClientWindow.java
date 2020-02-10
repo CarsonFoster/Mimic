@@ -2,13 +2,19 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.*;
+import java.util.*;
 import javax.swing.*;
 
 public class ClientWindow extends JFrame implements Client{
 
     private static int WIDTH, HEIGHT;
     private boolean SERVER_FLAGS = false;
-    private String ip = "";
+    private String ip;
+    private JList<String> list;
+    private JTextArea messages;
+    private JTextField text;
+    private JButton send;
+    private lowlevel.Client client;
     /*private Painter p;
     
     private interface Painter {
@@ -45,7 +51,7 @@ public class ClientWindow extends JFrame implements Client{
         
     }
     
-    private static void constructChannelList(Container pane, String[] l) {
+    private static JList<String> constructChannelList(Container pane, String[] l) {
         JList<String> list = new JList<>(l);
         JScrollPane scroll = new JScrollPane(list);
         scroll.setMaximumSize(new Dimension(WIDTH / 4, HEIGHT)); //TODO: fix this; it doesn't work, but also not high priority
@@ -58,9 +64,10 @@ public class ClientWindow extends JFrame implements Client{
         //wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.LINE_AXIS));
         //wrapper.add(scroll);
         pane.add(scroll, c);
+        return list;
     }
     
-    private static void constructMessages(Container pane) {
+    private static JTextArea constructMessages(Container pane) {
         JTextArea a = new JTextArea();
         a.setEditable(false);
         JPanel p = new JPanel() {
@@ -81,9 +88,10 @@ public class ClientWindow extends JFrame implements Client{
         c.fill = GridBagConstraints.BOTH;
         pane.add(p, c);
         pane.add(a, c);
+        return a;
     }
     
-    private static void constructYourMessage(Container pane) {
+    private static JComponent[] constructYourMessage(Container pane) { //TextField, button
         JTextField a = new JTextField();
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 1; c.gridy = 2;
@@ -97,9 +105,10 @@ public class ClientWindow extends JFrame implements Client{
         c.weightx = 0; c.weighty = 0;
         c.fill = GridBagConstraints.BOTH;
         pane.add(b, c);
+        return new JComponent[] {a, b};
     }
     
-    public ClientWindow(boolean server) {
+    public ClientWindow(boolean server, String ip) {
         super("Mimic");
         Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
         WIDTH = (int)(screensize.getWidth() * 3.0/7.0);
@@ -111,23 +120,54 @@ public class ClientWindow extends JFrame implements Client{
         pane.setLayout(new GridBagLayout());
         if (server) {
             SERVER_FLAGS = true;
-            ip = lowlevel.Client.getLocalIP();
+            this.ip = lowlevel.Client.getLocalIP();
+        } else {
+            this.ip = ip;
         }
         constructTitle(pane);
-        String[] abcs = new String[52];
+        /*String[] abcs = new String[52];
         for (int i = 0; i < 26; i++) {
             abcs[i*2] = "" + (char)(97 + i);
             abcs[i*2 + 1] = "" + (char)(65 + i);
+        }*/
+        messages = constructMessages(pane);
+        JComponent[] arr = constructYourMessage(pane);
+        text = (JTextField)arr[0];
+        send = (JButton)arr[1];
+        client = lowlevel.Client.initiate(ip, this, x -> {
+            messages.append(x);
+        });
+        System.out.println("still going1");
+        assert client != null : "Client is null";
+        ArrayList<String> tmp = null;
+        try {
+            System.out.println("still going 1.5");
+            tmp = client.getChannels();
+            System.out.println("still going 1.5.5");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        } 
+        System.out.println("still going2");
+        assert tmp != null : "Channels are null";
+        String[] channels = null;
+        System.out.println("still going3");
+        try {
+            channels = tmp.toArray(new String[1]);
+        } catch (Exception e) {
+            System.out.println("test");
+            assert false : "a";
         }
-        constructChannelList(pane, abcs);
-        constructMessages(pane);
-        constructYourMessage(pane);
+        System.out.println("still going4");
+        assert false : "hiya";
+        System.out.println(Arrays.toString(channels));
+        list = constructChannelList(pane, channels);
+        //System.out.println(client);
         pack();
         setVisible(true);
     }
     
     public static void main(String[] args) {
-        ClientWindow cw = new ClientWindow(false);
+        ClientWindow cw = new ClientWindow(false, null);
         //cw.promptForUsername();
         //cw.errorUsername();
     }
