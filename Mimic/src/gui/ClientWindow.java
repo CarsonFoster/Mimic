@@ -2,8 +2,13 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.*;
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 public class ClientWindow extends JFrame implements Client{
 
@@ -53,6 +58,7 @@ public class ClientWindow extends JFrame implements Client{
     
     private static JList<String> constructChannelList(Container pane, String[] l) {
         JList<String> list = new JList<>(l);
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scroll = new JScrollPane(list);
         scroll.setMaximumSize(new Dimension(WIDTH / 4, HEIGHT)); //TODO: fix this; it doesn't work, but also not high priority
         GridBagConstraints c = new GridBagConstraints();
@@ -130,37 +136,39 @@ public class ClientWindow extends JFrame implements Client{
             abcs[i*2] = "" + (char)(97 + i);
             abcs[i*2 + 1] = "" + (char)(65 + i);
         }*/
-        messages = constructMessages(pane);
-        JComponent[] arr = constructYourMessage(pane);
-        text = (JTextField)arr[0];
-        send = (JButton)arr[1];
         client = lowlevel.Client.initiate(ip, this, x -> {
             messages.append(x);
         });
-        System.out.println("still going1");
         assert client != null : "Client is null";
-        ArrayList<String> tmp = null;
-        try {
-            System.out.println("still going 1.5");
-            tmp = client.getChannels();
-            System.out.println("still going 1.5.5");
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        } 
-        System.out.println("still going2");
-        assert tmp != null : "Channels are null";
-        String[] channels = null;
-        System.out.println("still going3");
-        try {
-            channels = tmp.toArray(new String[1]);
-        } catch (Exception e) {
-            System.out.println("test");
-            assert false : "a";
-        }
-        System.out.println("still going4");
-        assert false : "hiya";
-        System.out.println(Arrays.toString(channels));
+        ArrayList<String> tmp = client.info.channels;
+        assert tmp != null : "Channels are null"; //should literally never happen
+        String[] channels = tmp.toArray(new String[1]);
         list = constructChannelList(pane, channels);
+        list.setSelectedIndex(0);
+        list.addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting()) return;
+                JList<String> l = (JList<String>)e.getSource();
+                lowlevel.Error x = client.changeChannel(l.getSelectedValue());
+                assert x == lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
+                messages.setText("");
+            }
+        });
+        messages = constructMessages(pane);
+        JComponent[] arr = constructYourMessage(pane);
+        text = (JTextField)arr[0];
+        text.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enter");
+        AbstractAction sendMessage = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //System.out.println(text.getText());
+                client.send("MSG " + text.getText());
+                text.setText("");
+            }
+        };
+        text.getActionMap().put("enter", sendMessage);
+        send = (JButton)arr[1];
+        send.addActionListener(sendMessage);
         //System.out.println(client);
         pack();
         setVisible(true);

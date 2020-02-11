@@ -58,7 +58,7 @@ public class ServerThread extends Thread {
         }
         send("200 OK");
         Server.usernames.put(id, username);
-        send(Server.channelsList.stream().reduce("", (x, y) -> x + y + " ") + "DEFAULT " + Server.defaultChannel());
+        send(Server.channelsList.subList(1, Server.channelsList.size()).stream().reduce("", (x, y) -> x + y + " ") + "DEFAULT " + Server.defaultChannel());
         send("000 NONE");
         send("000 NONE");
         send("000 NONE");

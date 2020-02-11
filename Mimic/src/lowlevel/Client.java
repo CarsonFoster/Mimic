@@ -11,7 +11,7 @@ public class Client {
     private Socket client;
     private BufferedReaderListener brl;
     private Thread brlthread;
-    protected Info info;
+    public Info info;
     
     public static class Info {
         public String username, channel, host;

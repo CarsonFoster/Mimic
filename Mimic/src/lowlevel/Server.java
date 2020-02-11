@@ -93,7 +93,7 @@ public class Server {
     }
     
     protected static String defaultChannel() {
-        return "#general"; // subject to change
+        return channelsList.get(0);
     }
     
     protected static boolean checkChannel(int id, String channel) {
@@ -109,7 +109,7 @@ Communication Example:
 2. C sends username
 3. S sends "200 OK" if username available or "409 CONFLICT" if already taken or disallowed
 4. Until "200 OK" in 3, repeat 2-3
-5. S sends channel list (separated by spaces) and then " DEFAULT " and then the default channel (all channels start with #)
+5. S sends channel list (separated by spaces and without the default one) and then " DEFAULT " and then the default channel (all channels start with #)
 6. S sends <additional slot 1 (extra data TBD)> or "000 NONE"
 7. S sends <additional slot 2 (extra data TBD)> or "000 NONE"
 8. S sends <additional slot 3 (extra data TBD)> or "000 NONE"
