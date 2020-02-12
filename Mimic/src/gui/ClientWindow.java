@@ -137,7 +137,11 @@ public class ClientWindow extends JFrame implements Client{
             abcs[i*2 + 1] = "" + (char)(65 + i);
         }*/
         client = lowlevel.Client.initiate(ip, this, x -> {
-            messages.append(x);
+            String[] arr = x.split("MSG");
+            String user = arr[0].substring(5);
+            String msg = arr[1];
+            messages.append(user + ": " + msg);
+            messages.update(messages.getGraphics());
         });
         assert client != null : "Client is null";
         ArrayList<String> tmp = client.info.channels;
@@ -145,14 +149,12 @@ public class ClientWindow extends JFrame implements Client{
         String[] channels = tmp.toArray(new String[1]);
         list = constructChannelList(pane, channels);
         list.setSelectedIndex(0);
-        list.addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent e) {
-                if (e.getValueIsAdjusting()) return;
-                JList<String> l = (JList<String>)e.getSource();
-                lowlevel.Error x = client.changeChannel(l.getSelectedValue());
-                assert x == lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
-                messages.setText("");
-            }
+        list.addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting()) return;
+            JList<String> l = (JList<String>)e.getSource();
+            lowlevel.Error x1 = client.changeChannel(l.getSelectedValue());
+            assert x1 == lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
+            messages.setText("");
         });
         messages = constructMessages(pane);
         JComponent[] arr = constructYourMessage(pane);

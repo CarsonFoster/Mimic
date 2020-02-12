@@ -52,11 +52,10 @@ public class Server {
                             boolean size = ids.size() > 0;
                             boolean gtz = false;
                             if (size) {
-                                ids.stream()
-                                        .forEach(x -> System.out.println(x + " : " + Server.indices.get(x)));
+                                /*ids.stream()
+                                        .forEach(x -> System.out.println(x + " : " + Server.indices.get(x)));*/
                                 gtz = ids.stream()
-                                        .mapToInt(
-                                                x -> Server.indices.get(x))
+                                        .mapToInt(x -> Server.indices.get(x))
                                         .min()
                                         .getAsInt() > 0;
                             }

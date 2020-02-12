@@ -8,10 +8,11 @@ public class ServerThread extends Thread {
     private Socket client;
     public int id;
     private BufferedReader in;
-    private BufferedReaderListenerServer brl;
-    private MessageListener ml;
+    //private BufferedReaderListenerServer brl;
+    //private MessageListener ml;
+    private CombinedBufferMessageListener cbml;
     private DataOutputStream out;
-    private Thread bt, mt;
+    private Thread cbmlt;//bt, mt;
     public volatile boolean running = true;
     
     public ServerThread(Socket c) {
@@ -64,7 +65,52 @@ public class ServerThread extends Thread {
         send("000 NONE");
         Server.channels.put(id, Server.defaultChannel());
         Server.idsByChannel.get(Server.defaultChannel()).add(id);
-        brl = new BufferedReaderListenerServer(in, this);
+        cbml = new CombinedBufferMessageListener(in, this);
+        cbml.addBehavior((msg, st) -> {
+            String[] arr = msg.split(" ");
+            String first = arr[0];
+            switch (first) {
+                case "MSG": 
+                    System.out.println("Message from " + Server.usernames.get(id) + " in channel " + Server.channels.get(id) + ": " + msg.substring(4));
+                    String channel = Server.channels.get(id);
+                    synchronized (Server.lock) {
+                        Server.messages.get(channel).add("USER " + Server.usernames.get(id) + " " + msg);
+                        synchronized (Server.idsLock) {
+                            Server.idsByChannel.get(channel).stream().filter(x -> x != st.id).forEach(x -> Server.ready.put(x, Server.ready.get(x) + 1));
+                        }
+                    }
+                    break;
+                case "\\channel": 
+                    channel = arr[1];
+                    if (arr.length > 2 || !Server.checkChannel(id, channel))
+                        send("409 CONFLICT");
+                    else {
+                        synchronized (Server.idsLock) {
+                            Server.idsByChannel.get(Server.channels.get(id)).remove(id);
+                            Server.idsByChannel.get(channel).add(id);
+                        }
+                        Server.channels.put(id, channel);
+                        Server.indices.put(id, 0);
+                        send("200 OK");
+                    }
+                    break;
+                case "BYE": 
+                    send("BYE");
+                    st.shutdown();
+                    break;
+            }
+        }, (st) -> {
+            int index = Server.indices.get(id);
+            String channel = Server.channels.get(id);
+            String message = Server.messages.get(channel).get(index);
+            if (!message.startsWith("USER " + Server.usernames.get(st.id)))
+                send(message);
+            Server.indices.put(id, index + 1);
+        });
+        cbmlt = new Thread(cbml);
+        cbmlt.setName("Combined Buffered Reader & Message Listener " + id);
+        cbmlt.start();
+        /*brl = new BufferedReaderListenerServer(in, this);
         brl.addBehavior((msg, st) -> {
             String[] arr = msg.split(" ");
             String first = arr[0];
@@ -113,9 +159,7 @@ public class ServerThread extends Thread {
         bt.setName("BufferListener " + id);
         mt.setName("MessageListener " + id);
         bt.start();
-        mt.start();
-        while (running) {}
-        System.out.println("Exiting thread " + id);
+        mt.start();*/
     }
     
     private Error send(String msg) {
@@ -142,8 +186,9 @@ public class ServerThread extends Thread {
     
     public synchronized void shutdown() {
         running = false;
-        bt.interrupt();
-        mt.interrupt();
+        /*bt.interrupt();
+        mt.interrupt();*/
+        cbmlt.interrupt();
         try {
             in.close();
             out.close();
@@ -155,5 +200,6 @@ public class ServerThread extends Thread {
         Server.indices.remove(id);
         Server.usernames.remove(id);
         Server.ready.remove(id);
+        System.out.println("Exited thread " + id);
     }
 }
