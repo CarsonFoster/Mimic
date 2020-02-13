@@ -8,5 +8,6 @@ public enum Error {
     MESSAGE_RECEIVE,
     MESSAGE_SEND,
     DECLINED,
+    USERNAME,
     CONNECT;
 }

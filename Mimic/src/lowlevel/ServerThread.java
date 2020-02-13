@@ -76,9 +76,13 @@ public class ServerThread extends Thread {
                     synchronized (Server.lock) {
                         Server.messages.get(channel).add("USER " + Server.usernames.get(id) + " " + msg);
                         synchronized (Server.idsLock) {
+                            //System.out.println("IDS: " + Server.idsByChannel.get("#general"));
                             Server.idsByChannel.get(channel).stream().filter(x -> x != st.id).forEach(x -> Server.ready.put(x, Server.ready.get(x) + 1));
                         }
                     }
+                    System.out.println(Server.messages.get("#general"));
+                    System.out.println("Ready: " + Server.ready.get(0) + " " + Server.ready.get(1));
+                    System.out.println("Indices: " + Server.indices.get(0) + " " + Server.indices.get(1));
                     break;
                 case "\\channel": 
                     channel = arr[1];
@@ -103,9 +107,12 @@ public class ServerThread extends Thread {
             int index = Server.indices.get(id);
             String channel = Server.channels.get(id);
             String message = Server.messages.get(channel).get(index);
-            if (!message.startsWith("USER " + Server.usernames.get(st.id)))
+            boolean send_ = !message.startsWith("USER " + Server.usernames.get(st.id) + " ");
+            if (send_) {
                 send(message);
+            }
             Server.indices.put(id, index + 1);
+            return send_;
         });
         cbmlt = new Thread(cbml);
         cbmlt.setName("Combined Buffered Reader & Message Listener " + id);

@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -114,6 +116,10 @@ public class ClientWindow extends JFrame implements Client{
         return new JComponent[] {a, b};
     }
     
+    private static String format(String username, String message) {
+        return username + ": " + message + "\n";
+    }
+    
     public ClientWindow(boolean server, String ip) {
         super("Mimic");
         Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -140,13 +146,14 @@ public class ClientWindow extends JFrame implements Client{
             String[] arr = x.split("MSG");
             String user = arr[0].substring(5);
             String msg = arr[1];
-            messages.append(user + ": " + msg);
+            messages.append(format(user, msg));
             messages.update(messages.getGraphics());
         });
         assert client != null : "Client is null";
         ArrayList<String> tmp = client.info.channels;
         assert tmp != null : "Channels are null"; //should literally never happen
         String[] channels = tmp.toArray(new String[1]);
+        this.setTitle("Mimic: " + client.info.username);
         list = constructChannelList(pane, channels);
         list.setSelectedIndex(0);
         list.addListSelectionListener((ListSelectionEvent e) -> {
@@ -155,6 +162,7 @@ public class ClientWindow extends JFrame implements Client{
             lowlevel.Error x1 = client.changeChannel(l.getSelectedValue());
             assert x1 == lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
             messages.setText("");
+            messages.update(messages.getGraphics());
         });
         messages = constructMessages(pane);
         JComponent[] arr = constructYourMessage(pane);
@@ -163,15 +171,22 @@ public class ClientWindow extends JFrame implements Client{
         AbstractAction sendMessage = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //System.out.println(text.getText());
-                client.send("MSG " + text.getText());
+                String msg = text.getText();
+                client.send("MSG " + msg);
                 text.setText("");
+                messages.append(format(client.info.username, msg));
+                messages.update(messages.getGraphics());
             }
         };
         text.getActionMap().put("enter", sendMessage);
         send = (JButton)arr[1];
         send.addActionListener(sendMessage);
         //System.out.println(client);
+        addWindowFocusListener(new WindowAdapter() {
+            public void windowGainedFocus(WindowEvent e) {
+                text.requestFocusInWindow();
+            }
+        });
         pack();
         setVisible(true);
     }

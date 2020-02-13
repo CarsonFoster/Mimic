@@ -40,10 +40,11 @@ public class Mimic {
     
     public static void main(String[] args) {
         new Thread(() -> Server.start()).start();
-        Client c = Client.initiate("localhost", new SingleClient("cwf"), str -> {System.out.println("c" + str);});
+        //Client c = Client.initiate("localhost", new SingleClient("cwf"), str -> {System.out.println("c" + str);});
         gui.ClientWindow cw = new gui.ClientWindow(false, "localhost");
+        gui.ClientWindow cw2 = new gui.ClientWindow(false, "localhost");
         //try { Thread.sleep(8000); } catch (Exception e) {}
-        c.send("MSG this is a test");
+        //c.send("MSG this is a test");
         //Client b = Client.initiate("localhost", new ConsoleClient(), str -> {System.out.println("b" + str);});
         //b.changeChannel("#welcome");
         //c.changeChannel("#welcome");

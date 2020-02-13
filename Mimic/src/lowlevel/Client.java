@@ -162,6 +162,7 @@ public class Client {
         do {
             if (res == null) return new Object[] {Error.MESSAGE_RECEIVE}; 
             name = c.promptForUsername();
+            if (name == null) return new Object[] {Error.USERNAME};
             e = send(name);
             if (e != Error.NONE) return new Object[] {e};
             res = receive();
