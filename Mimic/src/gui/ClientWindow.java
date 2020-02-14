@@ -145,7 +145,13 @@ public class ClientWindow extends JFrame implements Client{
         client = lowlevel.Client.initiate(ip, this, x -> {
             String[] arr = x.split("MSG");
             String user = arr[0].substring(5);
-            String msg = arr[1];
+            String msg = null;
+            try {
+                msg = arr[1];
+            } catch (Exception e) {
+                System.out.println(x);
+                assert false : "Error";
+            }
             messages.append(format(user, msg));
             messages.update(messages.getGraphics());
         });

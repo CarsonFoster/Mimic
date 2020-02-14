@@ -6,10 +6,12 @@ import java.util.function.*;
 public class BufferedReaderListener implements Runnable {
     private BufferedReader in;
     private Consumer<String> r;
+    private Client client;
     public volatile boolean running = true;
     
-    public BufferedReaderListener(BufferedReader i) {
+    public BufferedReaderListener(BufferedReader i, Client c) {
         in = i;
+        client = c;
     }
     
     public void addBehavior(Consumer<String> run) {
@@ -20,7 +22,9 @@ public class BufferedReaderListener implements Runnable {
         while (running) {
             try {
                 if (in.ready()) {
-                    r.accept(in.readLine().trim());
+                    synchronized (client.lock) {
+                        r.accept(in.readLine().trim());
+                    }
                 }
             } catch (IOException E) {}
         }

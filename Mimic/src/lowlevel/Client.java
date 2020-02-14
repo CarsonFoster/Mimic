@@ -12,6 +12,7 @@ public class Client {
     private BufferedReaderListener brl;
     private Thread brlthread;
     public Info info;
+    public final Object lock = new Object();
     
     public static class Info {
         public String username, channel, host;
@@ -88,7 +89,7 @@ public class Client {
             } catch (IOException e2) {}
             return Error.MESSAGE_RECEIVE;
         }*/
-        brl = new BufferedReaderListener(in);
+        brl = new BufferedReaderListener(in, this);
         return Error.NONE;
     }
     
@@ -137,8 +138,12 @@ public class Client {
     }
     
     public Error changeChannel(String channel) {
-        send("\\channel " + channel);
-        String line = receive();
+        String line = null;
+        synchronized (lock) {
+            send("\\channel " + channel);
+            line = receive();
+        }
+        assert line != null : "Received a null";
         return (line.contains("200") ? Error.NONE : Error.DECLINED);
     }
     

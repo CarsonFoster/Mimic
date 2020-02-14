@@ -43,6 +43,7 @@ public class Mimic {
         //Client c = Client.initiate("localhost", new SingleClient("cwf"), str -> {System.out.println("c" + str);});
         gui.ClientWindow cw = new gui.ClientWindow(false, "localhost");
         gui.ClientWindow cw2 = new gui.ClientWindow(false, "localhost");
+        gui.ClientWindow cw3 = new gui.ClientWindow(false, "localhost");
         //try { Thread.sleep(8000); } catch (Exception e) {}
         //c.send("MSG this is a test");
         //Client b = Client.initiate("localhost", new ConsoleClient(), str -> {System.out.println("b" + str);});

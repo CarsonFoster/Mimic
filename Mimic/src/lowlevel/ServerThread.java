@@ -90,11 +90,12 @@ public class ServerThread extends Thread {
                         send("409 CONFLICT");
                     else {
                         synchronized (Server.idsLock) {
-                            Server.idsByChannel.get(Server.channels.get(id)).remove(id);
+                            Server.idsByChannel.get(Server.channels.get(id)).remove(Integer.valueOf(id));
                             Server.idsByChannel.get(channel).add(id);
                         }
                         Server.channels.put(id, channel);
-                        Server.indices.put(id, 0);
+                        Server.indices.put(id, Server.messages.get(channel).size());
+                        Server.ready.put(id, 0);
                         send("200 OK");
                     }
                     break;
