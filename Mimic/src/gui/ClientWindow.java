@@ -77,6 +77,7 @@ public class ClientWindow extends JFrame implements Client{
     
     private static JTextArea constructMessages(Container pane) {
         JTextArea a = new JTextArea();
+        JScrollPane scroll = new JScrollPane(a);
         a.setEditable(false);
         JPanel p = new JPanel() {
             @Override
@@ -95,7 +96,7 @@ public class ClientWindow extends JFrame implements Client{
         c.weightx = 1; c.weighty = 1;
         c.fill = GridBagConstraints.BOTH;
         pane.add(p, c);
-        pane.add(a, c);
+        pane.add(scroll, c);
         return a;
     }
     
@@ -149,7 +150,7 @@ public class ClientWindow extends JFrame implements Client{
             try {
                 msg = arr[1];
             } catch (Exception e) {
-                System.out.println(x);
+                System.out.println("c" + x + "c");
                 assert false : "Error";
             }
             messages.append(format(user, msg));
@@ -178,6 +179,8 @@ public class ClientWindow extends JFrame implements Client{
             @Override
             public void actionPerformed(ActionEvent e) {
                 String msg = text.getText();
+                if (msg.length() == 0) 
+                    return;
                 client.send("MSG " + msg);
                 text.setText("");
                 messages.append(format(client.info.username, msg));
@@ -198,8 +201,7 @@ public class ClientWindow extends JFrame implements Client{
     }
     
     public static void main(String[] args) {
-        ClientWindow cw = new ClientWindow(false, null);
-        //cw.promptForUsername();
-        //cw.errorUsername();
+        //ClientWindow cw = new ClientWindow(false, null);
+        "this".substring(5);
     }
 }

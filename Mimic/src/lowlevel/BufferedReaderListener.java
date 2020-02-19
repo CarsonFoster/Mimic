@@ -23,7 +23,7 @@ public class BufferedReaderListener implements Runnable {
             try {
                 if (in.ready()) {
                     synchronized (client.lock) {
-                        r.accept(in.readLine().trim());
+                        r.accept(mimic.Mimic.trim(in.readLine()));
                     }
                 }
             } catch (IOException E) {}

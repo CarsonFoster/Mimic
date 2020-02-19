@@ -71,7 +71,11 @@ public class ServerThread extends Thread {
             String first = arr[0];
             switch (first) {
                 case "MSG": 
-                    System.out.println("Message from " + Server.usernames.get(id) + " in channel " + Server.channels.get(id) + ": " + msg.substring(4));
+                    try {
+                        System.out.println("Message from " + Server.usernames.get(id) + " in channel " + Server.channels.get(id) + ": " + msg.substring(4));
+                    } catch (Exception e) {
+                        assert false : ("Error: x" + msg + "x");
+                    }
                     String channel = Server.channels.get(id);
                     synchronized (Server.lock) {
                         Server.messages.get(channel).add("USER " + Server.usernames.get(id) + " " + msg);
@@ -81,8 +85,8 @@ public class ServerThread extends Thread {
                         }
                     }
                     System.out.println(Server.messages.get("#general"));
-                    System.out.println("Ready: " + Server.ready.get(0) + " " + Server.ready.get(1));
-                    System.out.println("Indices: " + Server.indices.get(0) + " " + Server.indices.get(1));
+                    System.out.println("Ready: " + Server.ready.get(0) + " " + Server.ready.get(1) + " " + Server.ready.get(2));
+                    System.out.println("Indices: " + Server.indices.get(0) + " " + Server.indices.get(1) + " " + Server.ready.get(2));
                     break;
                 case "\\channel": 
                     channel = arr[1];

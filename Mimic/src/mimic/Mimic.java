@@ -6,6 +6,13 @@ import lowlevel.Server;
 
 public class Mimic {
     
+    public static String trim(String in) {
+        while (in.charAt(in.length() - 1) == '\n') {
+            in = in.substring(0, in.length() - 1);
+        }
+        return in;
+    }
+    
     private static class ConsoleClient implements gui.Client {
         private Scanner in;
         protected ConsoleClient() {

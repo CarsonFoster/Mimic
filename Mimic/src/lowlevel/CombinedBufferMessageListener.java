@@ -32,7 +32,7 @@ public class CombinedBufferMessageListener implements Runnable {
             }
             try {
                 if (in.ready()) {
-                    r.accept(in.readLine().trim(), st);
+                    r.accept(mimic.Mimic.trim(in.readLine()), st);
                 }
             } catch (IOException E) {}
             int ready = Server.ready.get(st.id);
