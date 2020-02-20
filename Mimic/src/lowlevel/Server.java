@@ -3,8 +3,10 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.*;
 
 public class Server {
@@ -17,11 +19,18 @@ public class Server {
     protected static ConcurrentHashMap<String, List<String>> messages = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, Integer> indices = new ConcurrentHashMap<>(); // next to read
     protected static ConcurrentHashMap<Integer, Integer> ready = new ConcurrentHashMap<>();
-    protected static ArrayList<String> channelsList = new ArrayList<>();
+    protected static ArrayList<String> channelsList;// = new ArrayList<>();
     protected final static Object lock = new Object();
     protected final static Object idsLock = new Object();
+    private static Properties props;
     
-    public static Error start() {
+    public static Error start(String config) {
+        props = load(config);
+        if (props == null) {
+            System.out.printf("Uh oh! Couldn't read config file %s.%n", config);
+            return Error.CONFIG;
+        }
+        
         ServerSocket server = null;
         Socket client = null;
         
@@ -33,8 +42,11 @@ public class Server {
         }
         System.out.println("Server created.");
         // initilization and config file here
-        channelsList.add("#general"); // change later
-        channelsList.add("#welcome");
+        channelsList = getChannels();
+        if (channelsList == null) {
+            System.out.println("Uh oh! Couldn't read channels list.");
+            return Error.CONFIG;
+        }
         
         for (String channel : channelsList) {
             messages.put(channel, Collections.synchronizedList(new ArrayList<String>()));
@@ -87,6 +99,7 @@ public class Server {
     
     protected static boolean checkUser(String username) { // true if useable, false otherwise
         boolean ok = !usernames.containsValue(username) && username.matches("[A-Za-z0-9_]{3,25}");
+        ok = ok && !Arrays.asList(props.getProperty("forbidden_users").split(",")).contains(username);
         // other code TBD
         return ok;
     }
@@ -98,6 +111,54 @@ public class Server {
     protected static boolean checkChannel(int id, String channel) {
         return channelsList.contains(channel);
     } 
+    
+    /*
+    Config file should have:
+    channel list without default channel included (channels=)
+    default channel (default=)
+    forbidden usernames; optional (forbidden_users=)
+    */
+    
+    private static Properties load(String path) {
+        Properties defaultProps = new Properties();
+        try {
+            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "forbidden_users=poopoohead"));
+            Properties props = new Properties(defaultProps);
+            FileInputStream in = new FileInputStream(path);
+            props.load(in);
+            in.close();
+            return props;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+    
+    private static boolean checkChannelSyntax(String name) {
+        return name.matches("#[a-zA-Z]{1,15}");
+    }
+    
+    private static ArrayList<String> getChannels() {
+        assert props != null;
+        ArrayList<String> channels = new ArrayList<String>();
+        String[] c = props.getProperty("channels").trim().split(",");
+        String def = props.getProperty("default");
+        channels.add(def);
+        channels.addAll(Arrays.asList(c));
+        int i = channels.lastIndexOf(def);
+        while (i != 0) {
+            channels.remove(i);
+            i = channels.lastIndexOf(def);
+        }
+            
+        for (String channel : channels)
+            if (!checkChannelSyntax(channel)) return null;
+        return channels;
+    }
+    
+    public static void main(String[] args) {
+        props = load("test.properties");
+        System.out.println(getChannels());
+    }
     
 }
 

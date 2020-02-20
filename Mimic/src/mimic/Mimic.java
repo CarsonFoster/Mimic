@@ -46,7 +46,7 @@ public class Mimic {
     }
     
     public static void main(String[] args) {
-        new Thread(() -> Server.start()).start();
+        new Thread(() -> Server.start("default.properties")).start();
         //Client c = Client.initiate("localhost", new SingleClient("cwf"), str -> {System.out.println("c" + str);});
         gui.ClientWindow cw = new gui.ClientWindow(false, "localhost");
         gui.ClientWindow cw2 = new gui.ClientWindow(false, "localhost");

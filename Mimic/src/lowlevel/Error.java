@@ -9,5 +9,6 @@ public enum Error {
     MESSAGE_SEND,
     DECLINED,
     USERNAME,
-    CONNECT;
+    CONNECT,
+    CONFIG;
 }
