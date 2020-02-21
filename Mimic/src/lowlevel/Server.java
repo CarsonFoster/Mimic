@@ -99,7 +99,9 @@ public class Server {
     
     protected static boolean checkUser(String username) { // true if useable, false otherwise
         boolean ok = !usernames.containsValue(username) && username.matches("[A-Za-z0-9_]{3,25}");
-        ok = ok && !Arrays.asList(props.getProperty("forbidden_users").split(",")).contains(username);
+        for (String exp : props.getProperty("forbidden_users").split(",")) {
+            ok = ok && !username.matches(exp);
+        }
         // other code TBD
         return ok;
     }
@@ -122,7 +124,7 @@ public class Server {
     private static Properties load(String path) {
         Properties defaultProps = new Properties();
         try {
-            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "forbidden_users=poopoohead"));
+            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "forbidden_users=.*poopoohead.*"));
             Properties props = new Properties(defaultProps);
             FileInputStream in = new FileInputStream(path);
             props.load(in);
