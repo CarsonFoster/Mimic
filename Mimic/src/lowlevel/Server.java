@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.*;
@@ -20,6 +21,8 @@ public class Server {
     protected static ConcurrentHashMap<Integer, Integer> indices = new ConcurrentHashMap<>(); // next to read
     protected static ConcurrentHashMap<Integer, Integer> ready = new ConcurrentHashMap<>();
     protected static ArrayList<String> channelsList;// = new ArrayList<>();
+    protected static List<String> forbiddenUsers;
+    protected static HashMap<String, ArrayList<String>> forbiddenChannelsByUser;
     protected final static Object lock = new Object();
     protected final static Object idsLock = new Object();
     private static Properties props;
@@ -47,6 +50,9 @@ public class Server {
             System.out.println("Uh oh! Couldn't read channels list.");
             return Error.CONFIG;
         }
+        
+        forbiddenUsers = Arrays.asList(props.getProperty("forbidden_users").split(","));
+        forbiddenChannelsByUser = getForbiddenUserChannelPairs();
         
         for (String channel : channelsList) {
             messages.put(channel, Collections.synchronizedList(new ArrayList<String>()));
@@ -99,7 +105,7 @@ public class Server {
     
     protected static boolean checkUser(String username) { // true if useable, false otherwise
         boolean ok = !usernames.containsValue(username) && username.matches("[A-Za-z0-9_]{3,25}");
-        for (String exp : props.getProperty("forbidden_users").split(",")) {
+        for (String exp : forbiddenUsers) {
             ok = ok && !username.matches(exp);
         }
         // other code TBD
@@ -111,7 +117,7 @@ public class Server {
     }
     
     protected static boolean checkChannel(int id, String channel) {
-        return channelsList.contains(channel);
+        return channelsList.contains(channel) && (forbiddenChannelsByUser == null || !forbiddenChannelsByUser.get(usernames.get(id)).contains(channel));
     } 
     
     /*
@@ -119,6 +125,7 @@ public class Server {
     channel list without default channel included (channels=)
     default channel (default=)
     forbidden usernames; optional (forbidden_users=)
+    username and channel forbidden pairs; optional (forbidden_channels_by_user=user:channel,channel,channel;user2:....;)
     */
     
     private static Properties load(String path) {
@@ -157,9 +164,29 @@ public class Server {
         return channels;
     }
     
+    private static HashMap<String, ArrayList<String>> getForbiddenUserChannelPairs() {
+        assert props != null;
+        HashMap<String, ArrayList<String>> pairs = new HashMap<>();
+        String line = props.getProperty("forbidden_channels_by_user","a");
+        //System.out.println(line);
+        if (!line.endsWith(";")) line += ";";
+        //System.out.println(line);
+        if (!line.matches("([A-Za-z0-9_]{3,25}:#[a-zA-Z]{1,15}(,#[a-zA-Z]{1,15})*;)+"))
+            return null;
+        String[] rawPairs = line.split(";");
+        for (String rawPair: rawPairs) {
+            String[] split = rawPair.split(":");
+            ArrayList<String> channels = new ArrayList<>();
+            channels.addAll(Arrays.asList(split[1].split(",")));
+            pairs.put(split[0], channels);
+        }
+        return pairs;
+    }
+    
     public static void main(String[] args) {
         props = load("test.properties");
-        System.out.println(getChannels());
+        System.out.println(getForbiddenUserChannelPairs());
+        //System.out.println("poopoohead:#welcome,#general;peepeehead:#welcome;".matches("([A-Za-z0-9_]{3,25}:#[a-zA-Z]{1,15}(,#[a-zA-Z]{1,15})*;)+"));
     }
     
 }

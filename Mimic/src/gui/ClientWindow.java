@@ -54,6 +54,11 @@ public class ClientWindow extends JFrame implements Client{
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
+    @Override
+    public void errorChannel() {
+        JOptionPane.showMessageDialog(this, "That channel has been forbidden to you.", "Channel Denied", JOptionPane.ERROR_MESSAGE);
+    }
+    
     private static void constructTitle(Container pane) {
         
     }
@@ -167,7 +172,11 @@ public class ClientWindow extends JFrame implements Client{
             if (e.getValueIsAdjusting()) return;
             JList<String> l = (JList<String>)e.getSource();
             lowlevel.Error x1 = client.changeChannel(l.getSelectedValue());
-            assert x1 == lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
+            if (x1 != lowlevel.Error.NONE) {
+                errorChannel();
+                return;
+            }
+            assert x1 != lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
             messages.setText("");
             messages.update(messages.getGraphics());
         });

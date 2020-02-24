@@ -27,6 +27,8 @@ public class Mimic {
             System.out.print("Enter a username: ");
             return in.nextLine().trim();
         }
+        
+        public void errorChannel(){}
     }
     
     private static class SingleClient implements gui.Client {
@@ -43,10 +45,12 @@ public class Mimic {
         public String promptForUsername() {
             return name;
         }
+        
+        public void errorChannel() {}
     }
     
     public static void main(String[] args) {
-        new Thread(() -> Server.start("default.properties")).start();
+        new Thread(() -> Server.start("test.properties")).start();
         //Client c = Client.initiate("localhost", new SingleClient("cwf"), str -> {System.out.println("c" + str);});
         gui.ClientWindow cw = new gui.ClientWindow(false, "localhost");
         gui.ClientWindow cw2 = new gui.ClientWindow(false, "localhost");
