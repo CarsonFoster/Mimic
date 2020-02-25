@@ -174,9 +174,10 @@ public class ClientWindow extends JFrame implements Client{
             lowlevel.Error x1 = client.changeChannel(l.getSelectedValue());
             if (x1 != lowlevel.Error.NONE) {
                 errorChannel();
+                l.setSelectedIndex(0); // does this end up with another listener? is that a problem?
                 return;
             }
-            assert x1 != lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
+            assert x1 == lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
             messages.setText("");
             messages.update(messages.getGraphics());
         });

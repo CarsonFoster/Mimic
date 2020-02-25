@@ -139,7 +139,9 @@ public class Client {
     
     public Error changeChannel(String channel) {
         String line = null;
+        //System.out.println("Starting change channel operation.");
         synchronized (lock) {
+            //System.out.println("Change channel acquired lock.");
             send("\\channel " + channel);
             line = receive();
         }

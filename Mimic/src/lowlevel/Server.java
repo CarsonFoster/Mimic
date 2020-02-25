@@ -117,7 +117,13 @@ public class Server {
     }
     
     protected static boolean checkChannel(int id, String channel) {
-        return channelsList.contains(channel) && (forbiddenChannelsByUser == null || !forbiddenChannelsByUser.get(usernames.get(id)).contains(channel));
+        boolean ok = channelsList.contains(channel);
+        if (forbiddenChannelsByUser != null) {
+            ArrayList<String> forbidden = forbiddenChannelsByUser.get(usernames.get(id));
+            if (forbidden != null)
+                ok = ok && !forbidden.contains(channel);
+        }
+        return ok;
     } 
     
     /*
@@ -171,7 +177,7 @@ public class Server {
         //System.out.println(line);
         if (!line.endsWith(";")) line += ";";
         //System.out.println(line);
-        if (!line.matches("([A-Za-z0-9_]{3,25}:#[a-zA-Z]{1,15}(,#[a-zA-Z]{1,15})*;)+"))
+        if (line.contains(defaultChannel()) || !line.matches("([A-Za-z0-9_]{3,25}:#[a-zA-Z]{1,15}(,#[a-zA-Z]{1,15})*;)+"))
             return null;
         String[] rawPairs = line.split(";");
         for (String rawPair: rawPairs) {

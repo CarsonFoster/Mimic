@@ -23,8 +23,14 @@ public class BufferedReaderListener implements Runnable {
             try {
                 if (in.ready()) {
                     synchronized (client.lock) {
+                        //System.out.println("BufferedReaderListener acquired lock.");
+                        if (!in.ready()) continue;
+                        //String x = mimic.Mimic.trim(in.readLine());
+                        //System.out.println("Got text.");
                         r.accept(mimic.Mimic.trim(in.readLine()));
+                        //System.out.println("BufferedReaderListener releasing lock.");
                     }
+                    //System.out.println("BufferedReaderListener released lock.");
                 }
             } catch (IOException E) {}
         }
