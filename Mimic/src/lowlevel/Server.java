@@ -51,7 +51,7 @@ public class Server {
             return Error.CONFIG;
         }
         
-        forbiddenUsers = Arrays.asList(props.getProperty("forbidden_users").split(","));
+        forbiddenUsers = Arrays.asList(props.getProperty("forbidden_users","").split(","));
         forbiddenChannelsByUser = getForbiddenUserChannelPairs();
         
         for (String channel : channelsList) {
@@ -127,17 +127,20 @@ public class Server {
     } 
     
     /*
-    Config file should have:
+    Config file options:
     channel list without default channel included (channels=)
     default channel (default=)
-    forbidden usernames; optional (forbidden_users=)
+    default message; optional (default_message=line1\nline2\nline3)
+    forbidden usernames; optional (forbidden_users=user,user)
     username and channel forbidden pairs; optional (forbidden_channels_by_user=user:channel,channel,channel;user2:....;)
+    no talk channels; optional (silent=channel,channel)
+    muted users; optional (muted=user,user)
     */
     
     private static Properties load(String path) {
         Properties defaultProps = new Properties();
         try {
-            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "forbidden_users=.*poopoohead.*"));
+            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "default_message=Welcome!"));
             Properties props = new Properties(defaultProps);
             FileInputStream in = new FileInputStream(path);
             props.load(in);
@@ -146,6 +149,16 @@ public class Server {
         } catch (IOException e) {
             return null;
         }
+    }
+    
+    protected static List<String> getSilentChannels() {
+        assert props != null;
+        return Arrays.asList(props.getProperty("silent", "").split(","));
+    }
+    
+    protected static String getDefaultMessage() {
+        assert props != null;
+        return props.getProperty("default_message");
     }
     
     private static boolean checkChannelSyntax(String name) {
@@ -205,7 +218,7 @@ Communication Example:
 3. S sends "200 OK" if username available or "409 CONFLICT" if already taken or disallowed
 4. Until "200 OK" in 3, repeat 2-3
 5. S sends channel list (separated by spaces and without the default one) and then " DEFAULT " and then the default channel (all channels start with #)
-6. S sends <additional slot 1 (extra data TBD)> or "000 NONE"
+6. S sends the default welcome message
 7. S sends <additional slot 2 (extra data TBD)> or "000 NONE"
 8. S sends <additional slot 3 (extra data TBD)> or "000 NONE"
 
@@ -215,6 +228,7 @@ Changing channels:
 
 Send message:
 1. C sends "MSG " and then the message
+2. S sends "200 OK" or "401 SILENT" or "405 MUTED"
 
 Receive message:
 1. S sends "USER " and the username of the sender and then " MSG " and the message

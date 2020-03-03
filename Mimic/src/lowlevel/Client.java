@@ -15,7 +15,7 @@ public class Client {
     public final Object lock = new Object();
     
     public static class Info {
-        public String username, channel, host;
+        public String username, channel, host, default_msg;
         public ArrayList<String> channels, additional;
     }
     
@@ -46,6 +46,7 @@ public class Client {
             additional.add(line);
         }
         i.additional = additional;
+        i.default_msg = additional.remove(0);
         cl.info = i;
         
         cl.setBehavior(r);

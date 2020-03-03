@@ -48,15 +48,22 @@ public class ClientWindow extends JFrame implements Client{
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    private void info(String message, String title) {
+        JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void error(String message, String title) {
+        JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
+    }
+    
     @Override
     public void errorUsername() {
-        JOptionPane.showMessageDialog(this, "That username is already taken or invalid. Please try another.", "Invalid Username", JOptionPane.ERROR_MESSAGE);
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        error("That username is already taken or invalid. Please try another.", "Invalid Username");
     }
     
     @Override
     public void errorChannel() {
-        JOptionPane.showMessageDialog(this, "That channel has been forbidden to you.", "Channel Denied", JOptionPane.ERROR_MESSAGE);
+        error("That channel has been forbidden to you.", "Channel Denied");
     }
     
     private static void constructTitle(Container pane) {
@@ -156,7 +163,7 @@ public class ClientWindow extends JFrame implements Client{
                 msg = arr[1];
             } catch (Exception e) {
                 System.out.println("c" + x + "c");
-                assert false : "Error";
+                assert false : e.getCause().toString();
             }
             messages.append(format(user, msg));
             messages.update(messages.getGraphics());
@@ -208,6 +215,7 @@ public class ClientWindow extends JFrame implements Client{
         });
         pack();
         setVisible(true);
+        info(client.info.default_msg, "Welcome!");
     }
     
     public static void main(String[] args) {
