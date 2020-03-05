@@ -23,6 +23,7 @@ public class Server {
     protected static ArrayList<String> channelsList;// = new ArrayList<>();
     protected static List<String> forbiddenUsers;
     protected static HashMap<String, ArrayList<String>> forbiddenChannelsByUser;
+    protected static List<String> silentChannels;
     protected final static Object lock = new Object();
     protected final static Object idsLock = new Object();
     private static Properties props;
@@ -53,6 +54,7 @@ public class Server {
         
         forbiddenUsers = Arrays.asList(props.getProperty("forbidden_users","").split(","));
         forbiddenChannelsByUser = getForbiddenUserChannelPairs();
+        silentChannels = getSilentChannels();
         
         for (String channel : channelsList) {
             messages.put(channel, Collections.synchronizedList(new ArrayList<String>()));
@@ -126,11 +128,17 @@ public class Server {
         return ok;
     } 
     
+    protected static Error checkMessage(int id) {
+        String channel = channels.get(id);
+        return (silentChannels.contains(channel) ? Error.SILENT : Error.NONE);
+    }
+    
     /*
     Config file options:
     channel list without default channel included (channels=)
     default channel (default=)
     default message; optional (default_message=line1\nline2\nline3)
+    disable default message; optional (disable_default_message = false/true)
     forbidden usernames; optional (forbidden_users=user,user)
     username and channel forbidden pairs; optional (forbidden_channels_by_user=user:channel,channel,channel;user2:....;)
     no talk channels; optional (silent=channel,channel)
@@ -140,7 +148,7 @@ public class Server {
     private static Properties load(String path) {
         Properties defaultProps = new Properties();
         try {
-            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "default_message=Welcome!"));
+            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "default_message=Welcome!\n" + "disable_default_message=false"));
             Properties props = new Properties(defaultProps);
             FileInputStream in = new FileInputStream(path);
             props.load(in);
@@ -156,9 +164,19 @@ public class Server {
         return Arrays.asList(props.getProperty("silent", "").split(","));
     }
     
+    protected static String getDefaultMessageDisabled() {
+        assert props != null;
+        return props.getProperty("disable_default_message");
+    }
+    
     protected static String getDefaultMessage() {
         assert props != null;
-        return props.getProperty("default_message");
+        String msg = props.getProperty("default_message");
+        if (msg.contains("\n")) {
+            msg = msg.replaceAll("\n", "\\\\n");
+            props.setProperty("default_message", msg);
+        }
+        return msg;
     }
     
     private static boolean checkChannelSyntax(String name) {
@@ -186,12 +204,12 @@ public class Server {
     private static HashMap<String, ArrayList<String>> getForbiddenUserChannelPairs() {
         assert props != null;
         HashMap<String, ArrayList<String>> pairs = new HashMap<>();
-        String line = props.getProperty("forbidden_channels_by_user","a");
+        String line = props.getProperty("forbidden_channels_by_user","");
         //System.out.println(line);
         if (!line.endsWith(";")) line += ";";
         //System.out.println(line);
         if (line.contains(defaultChannel()) || !line.matches("([A-Za-z0-9_]{3,25}:#[a-zA-Z]{1,15}(,#[a-zA-Z]{1,15})*;)+"))
-            return null;
+            return pairs;
         String[] rawPairs = line.split(";");
         for (String rawPair: rawPairs) {
             String[] split = rawPair.split(":");
@@ -204,7 +222,7 @@ public class Server {
     
     public static void main(String[] args) {
         props = load("test.properties");
-        System.out.println(getForbiddenUserChannelPairs());
+        System.out.println(getDefaultMessage());
         //System.out.println("poopoohead:#welcome,#general;peepeehead:#welcome;".matches("([A-Za-z0-9_]{3,25}:#[a-zA-Z]{1,15}(,#[a-zA-Z]{1,15})*;)+"));
     }
     

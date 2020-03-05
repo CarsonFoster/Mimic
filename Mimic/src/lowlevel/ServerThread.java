@@ -61,7 +61,7 @@ public class ServerThread extends Thread {
         Server.usernames.put(id, username);
         send(Server.channelsList.subList(1, Server.channelsList.size()).stream().reduce("", (x, y) -> x + y + " ") + "DEFAULT " + Server.defaultChannel());
         send(Server.getDefaultMessage());
-        send("000 NONE");
+        send(Server.getDefaultMessageDisabled());
         send("000 NONE");
         Server.channels.put(id, Server.defaultChannel());
         Server.idsByChannel.get(Server.defaultChannel()).add(id);
@@ -77,6 +77,15 @@ public class ServerThread extends Thread {
                         assert false : ("Error: x" + msg + "x");
                     }
                     String channel = Server.channels.get(id);
+                    switch (Server.checkMessage(id)) {
+                        case NONE:
+                            break;
+                        case SILENT:
+                            send("401 SILENT");
+                            break;
+                        case MUTED:
+                            break;
+                    }
                     synchronized (Server.lock) {
                         Server.messages.get(channel).add("USER " + Server.usernames.get(id) + " " + msg);
                         synchronized (Server.idsLock) {
@@ -87,6 +96,7 @@ public class ServerThread extends Thread {
                     System.out.println(Server.messages.get("#general"));
                     System.out.println("Ready: " + Server.ready.get(0) + " " + Server.ready.get(1) + " " + Server.ready.get(2));
                     System.out.println("Indices: " + Server.indices.get(0) + " " + Server.indices.get(1) + " " + Server.ready.get(2));
+                    send("200 OK");
                     break;
                 case "\\channel": 
                     channel = arr[1];

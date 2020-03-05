@@ -17,6 +17,7 @@ public class Client {
     public static class Info {
         public String username, channel, host, default_msg;
         public ArrayList<String> channels, additional;
+        public boolean disable_default_msg;
     }
     
     public static String getLocalIP() {
@@ -46,7 +47,8 @@ public class Client {
             additional.add(line);
         }
         i.additional = additional;
-        i.default_msg = additional.remove(0);
+        i.default_msg = additional.remove(0).replaceAll("\\\\n", "\n");
+        i.disable_default_msg = Boolean.parseBoolean(additional.remove(0));
         cl.info = i;
         
         cl.setBehavior(r);

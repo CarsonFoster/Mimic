@@ -10,5 +10,7 @@ public enum Error {
     DECLINED,
     USERNAME,
     CONNECT,
-    CONFIG;
+    CONFIG,
+    SILENT,
+    MUTED;
 }

@@ -158,13 +158,12 @@ public class ClientWindow extends JFrame implements Client{
         client = lowlevel.Client.initiate(ip, this, x -> {
             String[] arr = x.split("MSG");
             String user = arr[0].substring(5);
-            String msg = null;
-            try {
-                msg = arr[1];
-            } catch (Exception e) {
+            String msg = arr[1];
+            //try {
+            /*} catch (Exception e) {
                 System.out.println("c" + x + "c");
                 assert false : e.getCause().toString();
-            }
+            }*/
             messages.append(format(user, msg));
             messages.update(messages.getGraphics());
         });
@@ -215,7 +214,8 @@ public class ClientWindow extends JFrame implements Client{
         });
         pack();
         setVisible(true);
-        info(client.info.default_msg, "Welcome!");
+        //System.out.println(client.info.default_msg);
+        if (!client.info.disable_default_msg) info(client.info.default_msg, "Welcome!");
     }
     
     public static void main(String[] args) {
