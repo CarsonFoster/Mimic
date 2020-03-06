@@ -79,12 +79,14 @@ public class ServerThread extends Thread {
                     String channel = Server.channels.get(id);
                     switch (Server.checkMessage(id)) {
                         case NONE:
+                            send("200 OK");
                             break;
                         case SILENT:
                             send("401 SILENT");
-                            break;
+                            return;
                         case MUTED:
-                            break;
+                            send("405 MUTED");
+                            return;
                     }
                     synchronized (Server.lock) {
                         Server.messages.get(channel).add("USER " + Server.usernames.get(id) + " " + msg);
@@ -96,7 +98,6 @@ public class ServerThread extends Thread {
                     System.out.println(Server.messages.get("#general"));
                     System.out.println("Ready: " + Server.ready.get(0) + " " + Server.ready.get(1) + " " + Server.ready.get(2));
                     System.out.println("Indices: " + Server.indices.get(0) + " " + Server.indices.get(1) + " " + Server.ready.get(2));
-                    send("200 OK");
                     break;
                 case "\\channel": 
                     channel = arr[1];

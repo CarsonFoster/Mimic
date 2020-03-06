@@ -22,6 +22,7 @@ public class Server {
     protected static ConcurrentHashMap<Integer, Integer> ready = new ConcurrentHashMap<>();
     protected static ArrayList<String> channelsList;// = new ArrayList<>();
     protected static List<String> forbiddenUsers;
+    protected static List<String> mutedUsers;
     protected static HashMap<String, ArrayList<String>> forbiddenChannelsByUser;
     protected static List<String> silentChannels;
     protected final static Object lock = new Object();
@@ -55,6 +56,7 @@ public class Server {
         forbiddenUsers = Arrays.asList(props.getProperty("forbidden_users","").split(","));
         forbiddenChannelsByUser = getForbiddenUserChannelPairs();
         silentChannels = getSilentChannels();
+        mutedUsers = getMutedUsers();
         
         for (String channel : channelsList) {
             messages.put(channel, Collections.synchronizedList(new ArrayList<String>()));
@@ -130,7 +132,7 @@ public class Server {
     
     protected static Error checkMessage(int id) {
         String channel = channels.get(id);
-        return (silentChannels.contains(channel) ? Error.SILENT : Error.NONE);
+        return (silentChannels.contains(channel) ? Error.SILENT : (mutedUsers.contains(usernames.get(id)) ? Error.MUTED : Error.NONE));
     }
     
     /*
@@ -148,7 +150,7 @@ public class Server {
     private static Properties load(String path) {
         Properties defaultProps = new Properties();
         try {
-            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "default_message=Welcome!\n" + "disable_default_message=false"));
+            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "silent=#welcome\n" + "default_message=Welcome!\n" + "disable_default_message=false"));
             Properties props = new Properties(defaultProps);
             FileInputStream in = new FileInputStream(path);
             props.load(in);
@@ -159,9 +161,18 @@ public class Server {
         }
     }
     
+    protected static List<String> getMutedUsers() {
+        assert props != null;
+        return Arrays.asList(props.getProperty("muted").split(","));
+    }
+    
     protected static List<String> getSilentChannels() {
         assert props != null;
-        return Arrays.asList(props.getProperty("silent", "").split(","));
+        List<String> x = Arrays.asList(props.getProperty("silent", "").split(","));
+        for (String channel : x) {
+            if (!checkChannelSyntax(channel)) return new ArrayList<>();
+        }
+        return x;
     }
     
     protected static String getDefaultMessageDisabled() {

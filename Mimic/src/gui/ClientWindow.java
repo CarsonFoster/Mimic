@@ -198,7 +198,18 @@ public class ClientWindow extends JFrame implements Client{
                 if (msg.length() == 0) 
                     return;
                 client.send("MSG " + msg);
+                String ret = client.receive();
                 text.setText("");
+                switch (ret.split(" ")[0]) {
+                    case "200":
+                        break;
+                    case "401": //silent
+                        error("This channel is silent.", "Silent Channel");
+                        return;
+                    case "405": //muted
+                        error("You have been muted.", "Muted");
+                        return;
+                }
                 messages.append(format(client.info.username, msg));
                 messages.update(messages.getGraphics());
             }
@@ -220,6 +231,6 @@ public class ClientWindow extends JFrame implements Client{
     
     public static void main(String[] args) {
         //ClientWindow cw = new ClientWindow(false, null);
-        "this".substring(5);
+        //"this".substring(5);
     }
 }
