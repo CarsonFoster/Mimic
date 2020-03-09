@@ -4,13 +4,11 @@ import java.awt.Dimension;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.*;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 public class ClientWindow extends JFrame implements Client{
 
@@ -44,8 +42,10 @@ public class ClientWindow extends JFrame implements Client{
     
     @Override
     public String promptForUsername() {
-        return JOptionPane.showInputDialog(this, "Enter a username: ", "Username", JOptionPane.QUESTION_MESSAGE);
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        String x = JOptionPane.showInputDialog(this, "Enter a username: ", "Username", JOptionPane.QUESTION_MESSAGE);
+        while (x == null)
+            x = JOptionPane.showInputDialog(this, "Enter a username: ", "Username", JOptionPane.QUESTION_MESSAGE);
+        return x;
     }
 
     private void info(String message, String title) {
@@ -133,7 +133,7 @@ public class ClientWindow extends JFrame implements Client{
         return username + ": " + message + "\n";
     }
     
-    public ClientWindow(boolean server, String ip) {
+    public ClientWindow(boolean server, String ip, int port) {
         super("Mimic");
         Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
         WIDTH = (int)(screensize.getWidth() * 3.0/7.0);
@@ -155,7 +155,7 @@ public class ClientWindow extends JFrame implements Client{
             abcs[i*2] = "" + (char)(97 + i);
             abcs[i*2 + 1] = "" + (char)(65 + i);
         }*/
-        client = lowlevel.Client.initiate(ip, this, x -> {
+        client = lowlevel.Client.initiate(ip, port, this, x -> {
             String[] arr = x.split("MSG");
             String user = arr[0].substring(5);
             String msg = arr[1];

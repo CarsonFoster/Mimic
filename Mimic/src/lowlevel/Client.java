@@ -3,6 +3,7 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.function.Consumer;
 
 public class Client {
@@ -28,13 +29,27 @@ public class Client {
         }
     }
     
-    public static Client initiate(String host, gui.Client c, Consumer<String> r) {
+    public static NetworkInterface getInterface() { // TODO: note: only returns first available non-loopback, non-virtual, up network interface
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface i = interfaces.nextElement();
+                if (i.isUp() && !i.isLoopback() && !i.isVirtual())
+                    return i;
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    public static Client initiate(String host, int port, gui.Client c, Consumer<String> r) {
         Client cl = new Client();
         Info i = new Info();
         i.host = host;
-        if (cl.start(host) != Error.NONE) return null;
+        if (cl.start(host, port) != Error.NONE) return null;
         Object[] ret = cl.setUsername(c);
-        if (ret.length < 1) return null; // error, no set username
+        if (ret.length < 2) return null; // error, no set username
         i.username = (String)ret[1];
         ArrayList<String> channels = cl.getChannels();
         if (channels == null) return null;
@@ -66,9 +81,9 @@ public class Client {
         brlthread.start();
     }
     
-    public Error start(String ip) {
+    public Error start(String ip, int port) {
         try {
-            client = new Socket(ip, Server.port);
+            client = new Socket(ip, port);
         } catch (IOException e) {
             return Error.CONNECT;
         }

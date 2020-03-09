@@ -11,7 +11,8 @@ import java.util.Properties;
 import java.util.concurrent.*;
 
 public class Server {
-    public final static int port = 6464;
+    private static final int DEFAULT_PORT = 6464;
+    public static int port;
     public static boolean quit = false;
     protected static ConcurrentHashMap<Integer, Error> threadErrors = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> usernames = new ConcurrentHashMap<>();
@@ -34,6 +35,12 @@ public class Server {
         if (props == null) {
             System.out.printf("Uh oh! Couldn't read config file %s.%n", config);
             return Error.CONFIG;
+        }
+        try {
+            port = Integer.parseInt(props.getProperty("port"));
+        } catch (Exception e) {
+            port = DEFAULT_PORT;
+            System.out.println("Error in parsing port, using default port: 6464.");
         }
         
         ServerSocket server = null;
@@ -137,6 +144,7 @@ public class Server {
     
     /*
     Config file options:
+    port (port=)
     channel list without default channel included (channels=)
     default channel (default=)
     default message; optional (default_message=line1\nline2\nline3)
@@ -150,7 +158,7 @@ public class Server {
     private static Properties load(String path) {
         Properties defaultProps = new Properties();
         try {
-            defaultProps.load(new StringReader("channels=#general\n" + "default=#welcome\n" + "silent=#welcome\n" + "default_message=Welcome!\n" + "disable_default_message=false"));
+            defaultProps.load(new StringReader("port=" + DEFAULT_PORT + "\n" + "channels=#general\n" + "default=#welcome\n" + "silent=#welcome\n" + "default_message=Welcome!\n" + "disable_default_message=false"));
             Properties props = new Properties(defaultProps);
             FileInputStream in = new FileInputStream(path);
             props.load(in);

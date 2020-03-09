@@ -2,9 +2,6 @@ package lowlevel;
 
 import java.io.*;
 import java.util.function.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class CombinedBufferMessageListener implements Runnable {
     private BufferedReader in;

@@ -1,7 +1,6 @@
 package mimic;
 
 import java.util.Scanner;
-import lowlevel.Client;
 import lowlevel.Server;
 
 public class Mimic {
@@ -50,11 +49,11 @@ public class Mimic {
     }
     
     public static void main(String[] args) {
-        new Thread(() -> Server.start("test.properties")).start();
+        //*new Thread(() -> Server.start("test.properties")).start();
         //Client c = Client.initiate("localhost", new SingleClient("cwf"), str -> {System.out.println("c" + str);});
         //gui.ClientWindow cw = new gui.ClientWindow(false, "localhost");
         //gui.ClientWindow cw2 = new gui.ClientWindow(false, "localhost");
-        gui.ClientWindow cw3 = new gui.ClientWindow(false, "localhost");
+        //*gui.ClientWindow cw3 = new gui.ClientWindow(false, "localhost", 6464);
         //try { Thread.sleep(8000); } catch (Exception e) {}
         //c.send("MSG this is a test");
         //Client b = Client.initiate("localhost", new ConsoleClient(), str -> {System.out.println("b" + str);});
