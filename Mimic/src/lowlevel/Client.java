@@ -3,8 +3,11 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class Client {
     private BufferedReader in;
@@ -198,5 +201,57 @@ public class Client {
         } while (!ok);
         return new Object[] {Error.NONE, name};
     }
+    
+    public static void main(String[] args) throws Exception {
+        Network n = new Network("192.168.1.0", 3);
+        n.stream().forEach(x -> System.out.println(x));
+    }
+    
+}
+
+class Network {
+    int netmask_length = 0;
+    int[] ip = new int[4];
+    
+    public Network(String ip_s, int netmask) throws Exception {
+        String[] ip_s_arr = ip_s.split("\\.");
+        if (ip_s_arr.length != 4) throw new Exception("That's not a valid IP!");
+        int i = 0;
+        for (String section : ip_s_arr) {
+            try {
+                ip[i++] = Integer.parseInt(section);
+            } catch (Exception e) {
+                throw new Exception("That's not a valid IP!");
+            }
+        }
+        
+        if (netmask <= 0 || netmask > 3) throw new Exception("That's not a valid netmask!");
+        netmask_length = netmask;
+    }
+    
+    public Stream<String> stream() {
+        List<String> list = new ArrayList<>();
+        String prefix = "";
+        for (int i = 0; i < netmask_length; i++) {
+            prefix += "" + ip[i] + ".";
+        }
+        prefix = prefix.substring(0, prefix.length() - 1);
+        
+        int addresses = (int)Math.pow(256, 4 - netmask_length);
+        for (int i = 0; i < addresses; i++)
+            list.add(prefix);
+        
+        for (int i = 0; i < 4 - netmask_length; i++) {
+            for (int j = 0; j < 256; j++) {
+                for (int k = 0; k < addresses; k++) {
+                    list.set(k, list.get(k) + "." + j); // doesn't work so far
+                }
+            }
+        }
+        
+        return list.stream();
+    }
+    
+    
     
 }
