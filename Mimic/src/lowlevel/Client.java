@@ -32,8 +32,13 @@ public class Client {
         }
     }
     
-    public static NetworkInterface getInterface() { // TODO: note: only returns first available non-loopback, non-virtual, up network interface
+    public static NetworkInterface getInterface() { //NVM ignore: TODO: note: only returns first available non-loopback, non-virtual, up network interface
         try {
+            return NetworkInterface.getByInetAddress(Inet4Address.getLocalHost());
+        } catch (Exception e) {
+            return null;
+        }
+        /*try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
                 NetworkInterface i = interfaces.nextElement();
@@ -43,7 +48,7 @@ public class Client {
             return null;
         } catch (Exception e) {
             return null;
-        }
+        }*/
     }
     
     public static Client initiate(String host, int port, gui.Client c, Consumer<String> r) {
@@ -203,8 +208,11 @@ public class Client {
     }
     
     public static void main(String[] args) throws Exception {
-        Network n = new Network("192.168.1.0", 3);
-        n.stream().forEach(x -> System.out.println(x));
+        String ip = getLocalIP();
+        int netmask = getInterface().getInterfaceAddresses().get(0).getNetworkPrefixLength() / 8;
+        System.out.println(ip + " " + netmask);
+        //Network n = new Network(ip, netmask);
+        //n.stream().forEach(x -> System.out.println(x));
     }
     
 }
@@ -241,15 +249,32 @@ class Network {
         for (int i = 0; i < addresses; i++)
             list.add(prefix);
         
-        for (int i = 0; i < 4 - netmask_length; i++) {
-            for (int j = 0; j < 256; j++) {
-                for (int k = 0; k < addresses; k++) {
-                    list.set(k, list.get(k) + "." + j); // doesn't work so far
-                }
+        /*for (int i = 1; i <= 4 - netmask_length; i++) {
+            for (int j = 0; j < 256; j++) {    
+                int k = i * j;
+                list.set(k, list.get(k) + "." + j); // doesn't work so far
             }
-        }
+        }*/
+        generate(0, list.size() - 1, list);
         
         return list.stream();
+    }
+    
+    private void generate(int start, int end, List<String> l) {
+        int section_length = (end - start + 1)/256; 
+        if (section_length <= 0) return;
+        for (int i = 0; i < 256; i++) {
+            int start_mini = start + i * section_length;
+            for (int j = start_mini; j < start_mini + section_length; j++) {
+                try{
+                    l.set(j, l.get(j) + "." + i);
+                    //System.out.println(l.get(j));
+                } catch (Exception e) {
+                    System.out.println("error");
+                }
+            }
+            generate(start_mini, start_mini + section_length - 1, l);
+        }
     }
     
     
