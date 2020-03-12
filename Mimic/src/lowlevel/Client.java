@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public class Client {
@@ -32,11 +34,11 @@ public class Client {
         }
     }
     
-    public static NetworkInterface getInterface() { //NVM ignore: TODO: note: only returns first available non-loopback, non-virtual, up network interface
+    public static int getNetmaskLength() { //NVM ignore: TODO: note: only returns first available non-loopback, non-virtual, up network interface
         try {
-            return NetworkInterface.getByInetAddress(Inet4Address.getLocalHost());
+            return NetworkInterface.getByInetAddress(Inet4Address.getLocalHost()).getInterfaceAddresses().get(0).getNetworkPrefixLength() / 8;
         } catch (Exception e) {
-            return null;
+            return 0;
         }
         /*try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -209,10 +211,31 @@ public class Client {
     
     public static void main(String[] args) throws Exception {
         String ip = getLocalIP();
-        int netmask = getInterface().getInterfaceAddresses().get(0).getNetworkPrefixLength() / 8;
+        int netmask = getNetmaskLength();
         System.out.println(ip + " " + netmask);
-        //Network n = new Network(ip, netmask);
-        //n.stream().forEach(x -> System.out.println(x));
+        System.out.println(InetAddress.getByName("10.116.74.103").isReachable(100));
+        Network n = new Network(ip, 3);
+        n.stream();
+        for (int j = 0; j < n.list.size(); j++) { //do ur journal
+           String x = n.list.get(j);
+           try {
+               InetAddress i = InetAddress.getByName(x);
+               if (i.isReachable(1))
+                   System.out.println("YES: " + i);
+               else
+                   System.out.println("NO: " + i);
+           } catch (Exception e) {}  
+        }
+        /*n.stream().forEach(x -> {
+           try {
+               InetAddress i = InetAddress.getByName(x);
+               if (i.isReachable(10))
+                   System.out.println("YES: " + i);
+               else
+                   System.out.println("NO: " + i);
+           } catch (Exception e) {} 
+        });*/
+        System.out.println(InetAddress.getByName("10.116.254.254").isReachable(100));
     }
     
 }
@@ -220,6 +243,7 @@ public class Client {
 class Network {
     int netmask_length = 0;
     int[] ip = new int[4];
+    List<String> list = null;
     
     public Network(String ip_s, int netmask) throws Exception {
         String[] ip_s_arr = ip_s.split("\\.");
@@ -238,7 +262,8 @@ class Network {
     }
     
     public Stream<String> stream() {
-        List<String> list = new ArrayList<>();
+        if (list != null) return list.stream();
+        list = new ArrayList<>();
         String prefix = "";
         for (int i = 0; i < netmask_length; i++) {
             prefix += "" + ip[i] + ".";
@@ -248,13 +273,7 @@ class Network {
         int addresses = (int)Math.pow(256, 4 - netmask_length);
         for (int i = 0; i < addresses; i++)
             list.add(prefix);
-        
-        /*for (int i = 1; i <= 4 - netmask_length; i++) {
-            for (int j = 0; j < 256; j++) {    
-                int k = i * j;
-                list.set(k, list.get(k) + "." + j); // doesn't work so far
-            }
-        }*/
+       
         generate(0, list.size() - 1, list);
         
         return list.stream();
