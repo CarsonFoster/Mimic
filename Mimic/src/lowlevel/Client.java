@@ -3,13 +3,10 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public class Client {
     private BufferedReader in;
@@ -24,6 +21,7 @@ public class Client {
         public String username, channel, host, default_msg;
         public ArrayList<String> channels, additional;
         public boolean disable_default_msg;
+        public int port;
     }
     
     public static String getLocalIP() {
@@ -57,6 +55,7 @@ public class Client {
         Client cl = new Client();
         Info i = new Info();
         i.host = host;
+        i.port = port;
         if (cl.start(host, port) != Error.NONE) return null;
         Object[] ret = cl.setUsername(c);
         if (ret.length < 2) return null; // error, no set username
@@ -213,9 +212,9 @@ public class Client {
         String ip = getLocalIP();
         int netmask = getNetmaskLength();
         System.out.println(ip + " " + netmask);
-        System.out.println(InetAddress.getByName("10.116.74.103").isReachable(100));
+        new Thread(() -> Server.start("test.properties")).start();
         Network n = new Network(ip, 3);
-        n.stream();
+        /*n.stream();
         for (int j = 0; j < n.list.size(); j++) { //do ur journal
            String x = n.list.get(j);
            try {
@@ -225,22 +224,27 @@ public class Client {
                else
                    System.out.println("NO: " + i);
            } catch (Exception e) {}  
-        }
-        /*n.stream().forEach(x -> {
-           try {
-               InetAddress i = InetAddress.getByName(x);
-               if (i.isReachable(10))
-                   System.out.println("YES: " + i);
-               else
-                   System.out.println("NO: " + i);
-           } catch (Exception e) {} 
-        });*/
-        System.out.println(InetAddress.getByName("10.116.254.254").isReachable(100));
+        }*/
+        n.stream().filter(x -> Network.open(x, 6464)).forEach(x -> System.out.println(x));
+        System.out.println("done");
     }
     
+    public List<String> scan() {
+        List<String> list;
+        String ip = getLocalIP();
+        Network n;
+        try {
+            n = new Network(ip, 3); // TODO: Change later perhaps? Only accounts for 256 addresses.
+        } catch (Exception e) {
+            return null;
+        }
+        list = n.stream().filter(x -> Network.open(x, info.port)).collect(Collectors.toList());
+        return list;
+    }
 }
 
 class Network {
+    public static final int TIMEOUT = 100;
     int netmask_length = 0;
     int[] ip = new int[4];
     List<String> list = null;
@@ -296,6 +300,15 @@ class Network {
         }
     }
     
-    
+    public static boolean open(String host, int port) {
+        boolean open = false;
+        try {
+            Socket s = new Socket();
+            s.connect(new InetSocketAddress(host, 6464), TIMEOUT);
+            open = true;
+            s.close();
+        } catch (Exception e) {}
+        return open;
+    }
     
 }

@@ -53,6 +53,11 @@ public class ServerThread extends Thread {
             }
         }*/
         String username = receive();
+        if (username == null) {
+            //shutdown();
+            System.out.println("Exiting thread " + id + " because of null username. Probably a test connection.");
+            return;
+        }
         while (!Server.checkUser(username)) {
             send("409 CONFLICT");
             username = receive();
