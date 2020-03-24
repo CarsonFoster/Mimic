@@ -241,6 +241,17 @@ public class Client {
         list = n.stream().filter(x -> Network.open(x, info.port)).collect(Collectors.toList());
         return list;
     }
+    
+    public List<String> scanParallel() {
+        List<String> list;
+        String ip = getLocalIP();
+        Network n;
+        try {
+            n = new Network(ip, 3);
+        } catch (Exception e) { return null; }
+        list = n.stream().parallel().filter(x -> Network.open(x, info.port)).collect(Collectors.toList());
+        return list;
+    }
 }
 
 class Network {

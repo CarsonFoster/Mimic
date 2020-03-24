@@ -51,8 +51,13 @@ public class Mimic {
     
     public static void main(String[] args) {
         new Thread(() -> Server.start("test.properties")).start();
-        Client c = Client.initiate("localhost", 6464, new ConsoleClient(), x -> {System.out.println(x);});
-        System.out.println(c.scan());
+        //Client c = Client.initiate("localhost", 6464, new ConsoleClient(), x -> {System.out.println(x);});
+        
+        Client c = new Client();
+        c.info = new Client.Info();
+        c.info.port = 6464;
+        System.out.println(c.scanParallel());
+        System.exit(0);
     }
     
 }
