@@ -40,7 +40,7 @@ public class Server {
             port = Integer.parseInt(props.getProperty("port"));
         } catch (Exception e) {
             port = DEFAULT_PORT;
-            System.out.println("Error in parsing port, using default port: 6464.");
+            System.out.println("Error in parsing port, using default port: " + DEFAULT_PORT + ".");
         }
         
         ServerSocket server = null;

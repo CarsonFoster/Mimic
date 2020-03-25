@@ -3,8 +3,11 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
@@ -16,6 +19,7 @@ public class Client {
     private Thread brlthread;
     public Info info;
     public final Object lock = new Object();
+    private static final int SECTIONS = 4;
     
     public static class Info {
         public String username, channel, host, default_msg;
@@ -247,9 +251,58 @@ public class Client {
         String ip = getLocalIP();
         Network n;
         try {
-            n = new Network(ip, 3);
+            n = new Network(ip, 2);
         } catch (Exception e) { return null; }
-        list = n.stream().parallel().filter(x -> Network.open(x, info.port)).collect(Collectors.toList());
+        list = n.stream().parallel().filter(x -> Network.open(x, info.port)).collect(Collectors.toList()); // reduces time to scan 256 w/ 100 ms timeout from 26s -> 3s
+        return list;
+    }
+    
+    public List<String> scanSplitParallel() {
+        class Int {
+            int i;
+            public Int() {
+                i = 0;
+            }
+            public void increment() {
+                i++;
+            }
+            public int get() {
+                return i;
+            }
+        }
+        List<String> list = new ArrayList<>();
+        String ip = getLocalIP();
+        Network n;
+        try {
+            n = new Network(ip, 2); //11 min 7 sec
+        } catch (Exception e) { return null; }
+        n.generate();
+        int size = n.list.size() / SECTIONS;
+        HashMap<Integer, List<String>> results = new HashMap<>();
+        final Int done = new Int();
+        for (int i = 0; i < SECTIONS; i++) {
+            final int j = i;
+            new Thread(() -> {
+                List<String> subList;
+                if (j == SECTIONS - 1)
+                    subList = n.list.subList(j * size, n.list.size());
+                else
+                    subList = n.list.subList(j * size, (j + 1) * size);
+                results.put(j, subList.stream().parallel().filter(x -> Network.open(x, info.port)).collect(Collectors.toList()));
+                done.increment();
+                //System.out.println(j + " done; " + done.get());
+            }).start();
+        }
+        //System.out.println("test");
+        while (done.get() != SECTIONS) {
+            try {
+                Thread.sleep(1);
+            } catch (Exception e) {}
+        }
+        //System.out.println("test2");
+        for (int i = 0; i < SECTIONS; i++) {
+            list.addAll(results.get(i));
+        }
         return list;
     }
 }
@@ -278,6 +331,13 @@ class Network {
     
     public Stream<String> stream() {
         if (list != null) return list.stream();
+       
+        generate();
+        
+        return list.stream();
+    }
+    
+    public void generate() {
         list = new ArrayList<>();
         String prefix = "";
         for (int i = 0; i < netmask_length; i++) {
@@ -288,10 +348,7 @@ class Network {
         int addresses = (int)Math.pow(256, 4 - netmask_length);
         for (int i = 0; i < addresses; i++)
             list.add(prefix);
-       
         generate(0, list.size() - 1, list);
-        
-        return list.stream();
     }
     
     private void generate(int start, int end, List<String> l) {
