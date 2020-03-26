@@ -233,7 +233,7 @@ public class Client {
         System.out.println("done");
     }
     
-    public List<String> scan() {
+    public static List<String> scan(int port) {
         List<String> list;
         String ip = getLocalIP();
         Network n;
@@ -242,22 +242,22 @@ public class Client {
         } catch (Exception e) {
             return null;
         }
-        list = n.stream().filter(x -> Network.open(x, info.port)).collect(Collectors.toList());
+        list = n.stream().filter(x -> Network.open(x, port)).collect(Collectors.toList());
         return list;
     }
     
-    public List<String> scanParallel() {
+    public static List<String> scanParallel(int port) {
         List<String> list;
         String ip = getLocalIP();
         Network n;
         try {
-            n = new Network(ip, 2);
+            n = new Network(ip, 3);
         } catch (Exception e) { return null; }
-        list = n.stream().parallel().filter(x -> Network.open(x, info.port)).collect(Collectors.toList()); // reduces time to scan 256 w/ 100 ms timeout from 26s -> 3s
+        list = n.stream().parallel().filter(x -> Network.open(x, port)).collect(Collectors.toList()); // reduces time to scan 256 w/ 100 ms timeout from 26s -> 3s
         return list;
     }
     
-    public List<String> scanSplitParallel() {
+    public static List<String> scanSplitParallel(int port) {
         class Int {
             int i;
             public Int() {
@@ -274,7 +274,7 @@ public class Client {
         String ip = getLocalIP();
         Network n;
         try {
-            n = new Network(ip, 2); //11 min 7 sec
+            n = new Network(ip, 3); //11 min 7 sec
         } catch (Exception e) { return null; }
         n.generate();
         int size = n.list.size() / SECTIONS;
@@ -288,7 +288,7 @@ public class Client {
                     subList = n.list.subList(j * size, n.list.size());
                 else
                     subList = n.list.subList(j * size, (j + 1) * size);
-                results.put(j, subList.stream().parallel().filter(x -> Network.open(x, info.port)).collect(Collectors.toList()));
+                results.put(j, subList.stream().parallel().filter(x -> Network.open(x, port)).collect(Collectors.toList()));
                 done.increment();
                 //System.out.println(j + " done; " + done.get());
             }).start();
