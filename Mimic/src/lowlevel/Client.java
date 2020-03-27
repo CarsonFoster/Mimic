@@ -305,6 +305,30 @@ public class Client {
         }
         return list;
     }
+    
+    public static boolean isValidIP(String ip) {
+        String[] sections = ip.split("\\.");
+        if (sections.length != 4) return false;
+        boolean ok = true;
+        for (String s : sections) {
+            try {
+                int tmp = Integer.parseInt(s);
+                ok &= (tmp >= 0 && tmp <= 255);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return ok;
+    }
+    
+    public static boolean isValidPort(String port) {
+        try {
+            int tmp = Integer.parseInt(port);
+            return (tmp > 0 && tmp <= 65535);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
 
 class Network {
