@@ -48,12 +48,12 @@ public class ClientWindow extends JFrame implements Client{
         return x;
     }
 
-    private void info(String message, String title) {
-        JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
+    protected static void info(String message, String title) {
+        JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
     }
     
-    private void error(String message, String title) {
-        JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
+    protected static void error(String message, String title) {
+        JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
     }
     
     @Override

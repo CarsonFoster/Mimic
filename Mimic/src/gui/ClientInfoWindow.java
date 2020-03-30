@@ -5,32 +5,13 @@ import java.awt.Toolkit;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Arrays;
 
 public class ClientInfoWindow extends JFrame {
     private static int WIDTH, HEIGHT;
     private JList<String> list;
     private JTextField ip_manual, port1, port2;
-    
-    /*private void createButton(Container pane) {
-        JButton b = new JButton("Connect");
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 2; c.gridy = 0;
-        c.gridwidth = 1; c.gridheight = 4;
-        c.weightx = 0; c.weighty = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        pane.add(b, c);
-        b.addActionListener(new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String ip = list.getSelectedValue();
-                System.out.println(ip);
-                String ip2 = ip_manual.getText();
-                System.out.println(ip2);
-                String p = port.getText();
-                System.out.println(p);
-            }
-        });
-    }*/
+    private JTabbedPane tabs;
     
     private JList<String> createList(Container pane, String[] ips) {
         JList<String> list = new JList<>(ips);
@@ -46,39 +27,7 @@ public class ClientInfoWindow extends JFrame {
         return list;
     }
     
-    private JTextField[] createManualEntry(Container pane) {
-        JTextField a = new JTextField();
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 1; c.gridy = 1;
-        c.gridwidth = 1; c.gridheight = 1;
-        c.weightx = 1.0; c.weighty = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        pane.add(a, c);
-        
-        JTextField b = new JTextField();
-        c.gridx = 1; c.gridy = 3;
-        c.gridwidth = 1; c.gridheight = 1;
-        c.weightx = 1.0; c.weighty = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        pane.add(b, c);
-        
-        JLabel label = new JLabel("Enter the IP manually: ");
-        c.gridx = 1; c.gridy = 0;
-        c.weightx = 1.0; c.weighty = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        pane.add(label, c);
-        
-        JLabel label2 = new JLabel("Enter the port: ");
-        c.gridx = 1; c.gridy = 2;
-        c.weightx = 1.0; c.weighty = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        pane.add(label2, c);
-        
-        return new JTextField[] {a, b};
-    }
-    
     private JComponent createManualEntryPanel() {
-        final int PAD = 10;
         JPanel panel = new JPanel(false);
         SpringLayout layout = new SpringLayout();
         panel.setLayout(layout);
@@ -108,16 +57,21 @@ public class ClientInfoWindow extends JFrame {
         port.putConstraint(SpringLayout.EAST, port_group, 10, SpringLayout.EAST, port1);
         port.putConstraint(SpringLayout.SOUTH, port_group, 10, SpringLayout.SOUTH, port1);
         
+        JPanel group = new JPanel();
+        SpringLayout group_layout = new SpringLayout();
+        group.setLayout(group_layout);
+        group.add(ip_group);
+        group.add(port_group);
+        group_layout.putConstraint(SpringLayout.WEST, port_group, 0, SpringLayout.WEST, ip_group);
+        group_layout.putConstraint(SpringLayout.NORTH, port_group, 10, SpringLayout.SOUTH, ip_group);
+        group_layout.putConstraint(SpringLayout.EAST, group, 0, SpringLayout.EAST, ip_group);
+        group_layout.putConstraint(SpringLayout.SOUTH, group, 0, SpringLayout.SOUTH, port_group);
         
-        panel.add(ip_group);
-        panel.add(port_group);
+        panel.add(group);
         panel.add(b);
         
-        layout.putConstraint(SpringLayout.VERTICAL_CENTER, ip_group, -10, SpringLayout.VERTICAL_CENTER, panel);
-        layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, ip_group, 0, SpringLayout.HORIZONTAL_CENTER, panel);
-        
-        layout.putConstraint(SpringLayout.WEST, port_group, 0, SpringLayout.WEST, ip_group);
-        layout.putConstraint(SpringLayout.NORTH, port_group, 10, SpringLayout.SOUTH, ip_group);
+        layout.putConstraint(SpringLayout.VERTICAL_CENTER, group, 0, SpringLayout.VERTICAL_CENTER, panel);
+        layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, group, 0, SpringLayout.HORIZONTAL_CENTER, panel);
         
         layout.putConstraint(SpringLayout.EAST, b, -10, SpringLayout.EAST, panel);
         layout.putConstraint(SpringLayout.SOUTH, b, -10, SpringLayout.SOUTH, panel);
@@ -126,25 +80,91 @@ public class ClientInfoWindow extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 String ip = ip_manual.getText();
                 String port = port1.getText();
-                System.out.println(ip);
-                System.out.println(port);
-                System.out.println(lowlevel.Client.isValidIP(ip));
-                System.out.println(lowlevel.Client.isValidPort(port));
+                /*JPanel tmp = new JPanel();
+                tmp.add(new JLabel("Hi"));
+                tabs.setComponentAt(1, tmp);*/
             }
         });
         
         return panel;
     }
     
+    private JComponent createNetworkScanList(String[] ips) {
+        JPanel panel = new JPanel(false);
+        SpringLayout layout = new SpringLayout();
+        panel.setLayout(layout);
+        
+        list = new JList<String>(ips);
+        JScrollPane scroll = new JScrollPane(list);
+        JLabel ip_label = new JLabel("IP: ");
+        JButton b = new JButton("Connect");
+        
+        panel.add(scroll);
+        panel.add(ip_label);
+        panel.add(b);
+        
+        layout.putConstraint(SpringLayout.SOUTH, ip_label, -10, SpringLayout.NORTH, scroll);
+        layout.putConstraint(SpringLayout.WEST, ip_label, 0, SpringLayout.WEST, scroll);
+        layout.putConstraint(SpringLayout.VERTICAL_CENTER, scroll, 0, SpringLayout.VERTICAL_CENTER, panel);
+        layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, scroll, 0, SpringLayout.HORIZONTAL_CENTER, panel);
+        
+        layout.putConstraint(SpringLayout.EAST, b, -10, SpringLayout.EAST, panel);
+        layout.putConstraint(SpringLayout.SOUTH, b, -10, SpringLayout.SOUTH, panel);
+        
+        b.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String ip = list.getSelectedValue();
+            }
+            
+        });
+        
+        return panel;
+    }
     private JComponent createNetworkScanPanel() {
         JPanel panel = new JPanel(false);
-        list = new JList<String>(new String[] {"192.168.1.0"});
-        JScrollPane scroll = new JScrollPane(list);
-        port2 = new JTextField();
-        JButton b = new JButton("Connect");
-        panel.add(scroll);
-        panel.add(port2);
+        SpringLayout layout = new SpringLayout();
+        panel.setLayout(layout);
+        
+        port2 = new JTextField(6);
+        JLabel port_label = new JLabel("Port:");
+        JButton b = new JButton("Scan");
+        
+        JPanel port_group = new JPanel();
+        SpringLayout port_layout = new SpringLayout();
+        port_group.setLayout(port_layout);
+        port_group.add(port2);
+        port_group.add(port_label);
+        
+        port_layout.putConstraint(SpringLayout.WEST, port2, 10, SpringLayout.EAST, port_label);
+        port_layout.putConstraint(SpringLayout.VERTICAL_CENTER, port2, 0, SpringLayout.VERTICAL_CENTER, port_label);
+        port_layout.putConstraint(SpringLayout.EAST, port_group, 0, SpringLayout.EAST, port2);
+        port_layout.putConstraint(SpringLayout.SOUTH, port_group, 0, SpringLayout.SOUTH, port2);
+        
+        panel.add(port_group);
         panel.add(b);
+        
+        layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, port_group, 0, SpringLayout.HORIZONTAL_CENTER, panel);
+        layout.putConstraint(SpringLayout.VERTICAL_CENTER, port_group, 0, SpringLayout.VERTICAL_CENTER, panel);
+        
+        layout.putConstraint(SpringLayout.EAST, b, -10, SpringLayout.EAST, panel);
+        layout.putConstraint(SpringLayout.SOUTH, b, -10, SpringLayout.SOUTH, panel);
+        
+        b.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String port_txt = port2.getText();
+                int port = lowlevel.Client.isValidPort(port_txt);
+                if (port == -1) {
+                    ClientWindow.error("The port number is invalid.", "Invalid Port");
+                    return;
+                }
+                String[] ips = lowlevel.Client.scanParallel(port).toArray(new String[0]);
+                if (ips.length == 0) ClientWindow.error("No suitable servers were found with the subnet mask of 255.255.255.0", "No servers found.");
+                else tabs.setComponentAt(1, createNetworkScanList(ips));
+            }
+        });
+        
         return panel;
     }
     
@@ -156,7 +176,7 @@ public class ClientInfoWindow extends JFrame {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        JTabbedPane tabs = new JTabbedPane();
+        tabs = new JTabbedPane();
         tabs.addTab("Manual Entry", null, createManualEntryPanel(), "Enter the IP manually");
         tabs.addTab("Network Scan", null, createNetworkScanPanel(), "Find a server on your network");
        
@@ -166,6 +186,7 @@ public class ClientInfoWindow extends JFrame {
     }
     
     public static void main(String[] args) {
+        new Thread(() -> lowlevel.Server.start("test.properties")).start();
         new ClientInfoWindow();
     }
 }

@@ -321,12 +321,13 @@ public class Client {
         return ok;
     }
     
-    public static boolean isValidPort(String port) {
+    public static int isValidPort(String port) {
         try {
             int tmp = Integer.parseInt(port);
-            return (tmp > 0 && tmp <= 65535);
+            if (tmp > 0 && tmp <= 65535) return tmp;
+            return -1;
         } catch (Exception e) {
-            return false;
+            return -1;
         }
     }
 }
@@ -396,7 +397,7 @@ class Network {
         boolean open = false;
         try {
             Socket s = new Socket();
-            s.connect(new InetSocketAddress(host, 6464), TIMEOUT);
+            s.connect(new InetSocketAddress(host, port), TIMEOUT);
             open = true;
             s.close();
         } catch (Exception e) {}
