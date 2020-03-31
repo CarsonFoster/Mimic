@@ -133,7 +133,7 @@ public class ClientWindow extends JFrame implements Client{
         return username + ": " + message + "\n";
     }
     
-    public ClientWindow(boolean server, String ip, int port) {
+    public ClientWindow(String ip, int port) {
         super("Mimic");
         Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
         WIDTH = (int)(screensize.getWidth() * 3.0/7.0);
@@ -143,18 +143,16 @@ public class ClientWindow extends JFrame implements Client{
         //setLocationRelativeTo(null);
         Container pane = getContentPane();
         pane.setLayout(new GridBagLayout());
-        if (server) {
-            SERVER_FLAGS = true;
-            this.ip = lowlevel.Client.getLocalIP();
-        } else {
-            this.ip = ip;
-        }
         constructTitle(pane);
         /*String[] abcs = new String[52];
         for (int i = 0; i < 26; i++) {
             abcs[i*2] = "" + (char)(97 + i);
             abcs[i*2 + 1] = "" + (char)(65 + i);
         }*/
+        if (!lowlevel.Network.open(ip, port)) {
+            error("Could not connect to server.", "Connection Error");
+            return;
+        }
         client = lowlevel.Client.initiate(ip, port, this, x -> {
             String[] arr = x.split("MSG");
             String user = arr[0].substring(5);

@@ -5,13 +5,14 @@ import java.awt.Toolkit;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
 
 public class ClientInfoWindow extends JFrame {
     private static int WIDTH, HEIGHT;
     private JList<String> list;
     private JTextField ip_manual, port1, port2;
     private JTabbedPane tabs;
+    private int networkScanPort;
+    private ClientInfoWindow thisOne;
     
     private JList<String> createList(Container pane, String[] ips) {
         JList<String> list = new JList<>(ips);
@@ -79,10 +80,22 @@ public class ClientInfoWindow extends JFrame {
         b.addActionListener(new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 String ip = ip_manual.getText();
-                String port = port1.getText();
-                /*JPanel tmp = new JPanel();
-                tmp.add(new JLabel("Hi"));
-                tabs.setComponentAt(1, tmp);*/
+                if (!lowlevel.Client.isValidIP(ip)) {
+                    ClientWindow.error("The IP is invalid.", "Invalid IP");
+                    return;
+                }
+                String port_txt = port1.getText();
+                int port = lowlevel.Client.isValidPort(port_txt);
+                if (port == -1) {
+                    ClientWindow.error("The port number is invalid.", "Invalid Port");
+                    return;
+                }
+                if (!lowlevel.Network.open(ip, port)) {
+                    ClientWindow.error("Could not connect to server.", "Connection Error");
+                    return;
+                }
+                thisOne.dispose();
+                new ClientWindow(ip, port);
             }
         });
         
@@ -115,6 +128,8 @@ public class ClientInfoWindow extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String ip = list.getSelectedValue();
+                thisOne.dispose();
+                new ClientWindow(ip, networkScanPort);
             }
             
         });
@@ -159,6 +174,7 @@ public class ClientInfoWindow extends JFrame {
                     ClientWindow.error("The port number is invalid.", "Invalid Port");
                     return;
                 }
+                networkScanPort = port;
                 String[] ips = lowlevel.Client.scanParallel(port).toArray(new String[0]);
                 if (ips.length == 0) ClientWindow.error("No suitable servers were found with the subnet mask of 255.255.255.0", "No servers found.");
                 else tabs.setComponentAt(1, createNetworkScanList(ips));
@@ -170,6 +186,7 @@ public class ClientInfoWindow extends JFrame {
     
     public ClientInfoWindow() {
         super("Mimic");
+        thisOne = this;
         Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
         WIDTH = (int)(screensize.getWidth() * 3.0/14.0);
         HEIGHT = (int)(screensize.getHeight() * 2.0/6.0);
