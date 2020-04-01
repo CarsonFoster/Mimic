@@ -155,7 +155,7 @@ public class Server {
     muted users; optional (muted=user,user)
     */
     
-    private static Properties load(String path) {
+    public static Properties load(String path) {
         Properties defaultProps = new Properties();
         try {
             defaultProps.load(new StringReader("port=" + DEFAULT_PORT + "\n" + "channels=#general\n" + "default=#welcome\n" + "silent=#welcome\n" + "default_message=Welcome!\n" + "disable_default_message=false"));
