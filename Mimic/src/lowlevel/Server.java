@@ -171,7 +171,7 @@ public class Server {
     
     protected static List<String> getMutedUsers() {
         assert props != null;
-        return Arrays.asList(props.getProperty("muted").split(","));
+        return Arrays.asList(props.getProperty("muted", "").split(","));
     }
     
     protected static List<String> getSilentChannels() {
