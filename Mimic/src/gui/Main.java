@@ -2,6 +2,8 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.event.*;
 import javafx.geometry.*;
@@ -62,7 +64,7 @@ public class Main extends Application {
             public void handle(ActionEvent event) {
                 System.out.println("Server");
                 stage.close();
-                new Server();
+                Server.call();
             }
         });
         
