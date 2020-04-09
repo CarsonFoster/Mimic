@@ -55,7 +55,7 @@ public class Main extends Application {
             public void handle(ActionEvent event) {
                 System.out.println("Client");
                 stage.close();
-                new ClientInfoWindow();
+                ClientInfoWindow.call();
             }
         });
         
