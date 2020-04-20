@@ -1,36 +1,42 @@
 package gui;
 
 import java.awt.Dimension;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.*;
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
+import java.awt.Toolkit;
+import java.util.ArrayList;
+import java.util.Optional;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.stage.*;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.layout.*;
+import javafx.scene.control.Alert.*;
+import javafx.event.*;
+import javafx.scene.Node;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
+import java.time.ZonedDateTime;
 
-public class ClientWindow extends JFrame implements Client{
+public class ClientWindow extends Application implements Client {
 
     private static int WIDTH, HEIGHT;
-    private boolean SERVER_FLAGS = false;
     private String ip;
-    private JList<String> list;
-    private JTextArea messages;
-    private JTextField text;
-    private JButton send;
+    private ListView<String> list;
+    private TextFlow messages;
+    private TextField text;
+    private Button send;
     private lowlevel.Client client;
-    /*private Painter p;
-    
-    private interface Painter {
-        public void paint(Graphics g);
-    }
-    
-    private class ClientPanel extends JPanel {
-        public void paintComponent(Graphics g) {
-            p.paint(g);
-        }
-    }*/
+    private ScrollPane scroll;
+    private static Stage stage;
+    protected static double listViewWidth;
+    private final static String[] colors = new String[] {"RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "PINK", "ORANGE"};
     
     public int getWidth() {
         return WIDTH;
@@ -42,18 +48,32 @@ public class ClientWindow extends JFrame implements Client{
     
     @Override
     public String promptForUsername() {
-        String x = JOptionPane.showInputDialog(this, "Enter a username: ", "Username", JOptionPane.QUESTION_MESSAGE);
-        while (x == null)
-            x = JOptionPane.showInputDialog(this, "Enter a username: ", "Username", JOptionPane.QUESTION_MESSAGE);
-        return x;
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Mimic");
+        dialog.setHeaderText("Username Entry");
+        dialog.setContentText("Please enter your username:");
+
+        Optional<String> result = dialog.showAndWait();
+        while (!result.isPresent()){
+            result = dialog.showAndWait();
+        }
+        return result.get();
     }
 
     protected static void info(String message, String title) {
-        JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("Mimic");
+        alert.setHeaderText(title);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
     
     protected static void error(String message, String title) {
-        JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setTitle("Mimic");
+        alert.setHeaderText(title);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
     
     @Override
@@ -66,169 +86,179 @@ public class ClientWindow extends JFrame implements Client{
         error("That channel has been forbidden to you.", "Channel Denied");
     }
     
-    private static void constructTitle(Container pane) {
+    private BorderPane createPane() {
+        BorderPane pane = new BorderPane();
         
+        HBox bottom = new HBox(text, send);
+        HBox.setHgrow(text, Priority.ALWAYS);
+        HBox.setMargin(text, new Insets(5, 10, 5, 5));
+        HBox.setMargin(send, new Insets(5, 5, 5, 0));
+        
+        pane.setLeft(list);
+        pane.setBottom(bottom);
+        pane.setCenter(scroll);
+        
+        BorderPane.setAlignment(bottom, Pos.BOTTOM_RIGHT);
+        BorderPane.setMargin(list, new Insets(5, 5, 0, 5));
+        BorderPane.setMargin(scroll, new Insets(5, 5, 0, 0));
+        
+        return pane;
     }
     
-    private static JList<String> constructChannelList(Container pane, String[] l) {
-        JList<String> list = new JList<>(l);
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane scroll = new JScrollPane(list);
-        scroll.setMaximumSize(new Dimension(WIDTH / 4, HEIGHT)); //TODO: fix this; it doesn't work, but also not high priority
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.gridy = 1;
-        c.gridwidth = 1; c.gridheight = GridBagConstraints.REMAINDER;
-        c.weighty = 1.0;
-        c.fill = GridBagConstraints.VERTICAL;
-        //JPanel wrapper = new JPanel(null);
-        //wrapper.setLayout(new BoxLayout(wrapper, BoxLayout.LINE_AXIS));
-        //wrapper.add(scroll);
-        pane.add(scroll, c);
+    private ListView<String> constructChannelList(String[] l) {
+        ListView<String> list = new ListView<>();
+        list.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        ObservableList<String> ol = FXCollections.observableArrayList(l);
+        list.setItems(ol);
+        list.setPrefWidth(WIDTH/10.0);
+        
+        //list.setMaxWidth(Region.USE_PREF_SIZE);//WIDTH / 3);
+        list.setEditable(false);
         return list;
     }
     
-    private static JTextArea constructMessages(Container pane) {
-        JTextArea a = new JTextArea();
-        JScrollPane scroll = new JScrollPane(a);
-        a.setEditable(false);
-        JPanel p = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Dimension s = getSize();
-                g.setColor(Color.white);
-                g.fillRect(0, 0, (int)s.getWidth(), (int)s.getHeight());
-                g.setColor(Color.black);
-                g.drawRect(0, 0, (int)s.getWidth(), (int)s.getHeight());
-            }
-        };
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 1; c.gridy = 1;
-        c.gridwidth = GridBagConstraints.REMAINDER; c.gridheight = GridBagConstraints.RELATIVE;
-        c.weightx = 1; c.weighty = 1;
-        c.fill = GridBagConstraints.BOTH;
-        pane.add(p, c);
-        pane.add(scroll, c);
-        return a;
+    private void constructMessages() {
+        messages = new TextFlow();
+        
+        scroll = new ScrollPane();
+        scroll.setContent(messages);
+        scroll.vvalueProperty().bind(messages.heightProperty());
+        scroll.setStyle("-fx-background: white;");
+        scroll.setFitToWidth(true);
     }
     
-    private static JComponent[] constructYourMessage(Container pane) { //TextField, button
-        JTextField a = new JTextField();
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 1; c.gridy = 2;
-        c.gridwidth = GridBagConstraints.RELATIVE; c.gridheight = GridBagConstraints.RELATIVE;
-        c.weightx = 1; c.weighty = 0;
-        c.fill = GridBagConstraints.BOTH;
-        pane.add(a, c);
-        JButton b = new JButton("Send");
-        c.gridx = 2; c.gridy = 2;
-        c.gridwidth = GridBagConstraints.REMAINDER; c.gridheight = GridBagConstraints.RELATIVE;
-        c.weightx = 0; c.weighty = 0;
-        c.fill = GridBagConstraints.BOTH;
-        pane.add(b, c);
-        return new JComponent[] {a, b};
+    private static Node[] constructYourMessage() { //TextField, button
+        TextField a = new TextField();
+        Button b = new Button("Send");
+        return new Node[] {a, b};
     }
     
-    private static String format(String username, String message) {
-        return username + ": " + message + "\n";
+    private static Text[] format(String username, String message) {
+        Text time = new Text();
+        ZonedDateTime now = ZonedDateTime.now();
+        time.setText(String.format(" [%02d:%02d] ", now.getHour(), now.getMinute()));
+        Text u = new Text();
+        u.setStyle("-fx-fill:" + colors[username.charAt(0) % 7] + ";-fx-font-weight:bold;");
+        u.setText(String.format("%25s", username));
+        Text m = new Text();
+        m.setText(": " + message + "\n");
+        return new Text[] {time, u, m};
+    }
+    
+    public static void call(String ip, int port) {
+        try {
+            new ClientWindow(ip, port).start(new Stage());
+        } catch (Exception e) {
+            ClientWindow.error("Failed to start Server GUI.", "GUI Failed to Start");
+        }
+    }
+    
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        ClientWindow.stage = primaryStage;
+        
+        stage.setTitle("Mimic: " + client.info.username);
+        stage.setResizable(false);
+        stage.setWidth(WIDTH);
+        stage.setHeight(HEIGHT);
+        
+        Scene scene = new Scene(createPane(), WIDTH, HEIGHT);
+        stage.setScene(scene);
+        stage.show();
+        text.requestFocus();
+        stage.focusedProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+            if (newValue == true)
+                text.requestFocus();
+        });
+    }
+    
+    public ClientWindow() {
+        this("localhost", 6464);
     }
     
     public ClientWindow(String ip, int port) {
-        super("Mimic");
         Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
         WIDTH = (int)(screensize.getWidth() * 3.0/7.0);
         HEIGHT = (int)(screensize.getHeight() * 2.0/3.0);
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        //setLocationRelativeTo(null);
-        Container pane = getContentPane();
-        pane.setLayout(new GridBagLayout());
-        constructTitle(pane);
-        /*String[] abcs = new String[52];
-        for (int i = 0; i < 26; i++) {
-            abcs[i*2] = "" + (char)(97 + i);
-            abcs[i*2 + 1] = "" + (char)(65 + i);
-        }*/
+
         if (!lowlevel.Network.open(ip, port)) {
             error("Could not connect to server.", "Connection Error");
             return;
         }
         client = lowlevel.Client.initiate(ip, port, this, x -> {
-            String[] arr = x.split("MSG");
-            String user = arr[0].substring(5);
-            String msg = arr[1];
-            //try {
-            /*} catch (Exception e) {
-                System.out.println("c" + x + "c");
-                assert false : e.getCause().toString();
-            }*/
-            messages.append(format(user, msg));
-            messages.update(messages.getGraphics());
+            String[] arr = x.split(" MSG ");
+            String user = arr[0].substring(5), msg = "";
+            try {
+                msg = arr[1];
+            } catch (Exception e) {
+                System.out.println("ERROR1");
+                System.out.println(x);
+            }
+            final String msg_lambda = msg;
+            Platform.runLater(
+                () -> {
+                   messages.getChildren().addAll(format(user, msg_lambda));
+                }
+            );
         });
         assert client != null : "Client is null";
         ArrayList<String> tmp = client.info.channels;
         assert tmp != null : "Channels are null"; //should literally never happen
         String[] channels = tmp.toArray(new String[1]);
-        this.setTitle("Mimic: " + client.info.username);
-        list = constructChannelList(pane, channels);
-        list.setSelectedIndex(0);
-        list.addListSelectionListener((ListSelectionEvent e) -> {
-            if (e.getValueIsAdjusting()) return;
-            JList<String> l = (JList<String>)e.getSource();
-            lowlevel.Error x1 = client.changeChannel(l.getSelectedValue());
+        list = constructChannelList(channels);
+        list.getSelectionModel().select(0);
+        list.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+            lowlevel.Error x1 = client.changeChannel(newValue);
             if (x1 != lowlevel.Error.NONE) {
                 errorChannel();
-                l.setSelectedIndex(0); // does this end up with another listener? is that a problem?
+                list.getSelectionModel().select(0);
                 return;
             }
             assert x1 == lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
-            messages.setText("");
-            messages.update(messages.getGraphics());
+            messages.getChildren().removeIf(x -> true);
         });
-        messages = constructMessages(pane);
-        JComponent[] arr = constructYourMessage(pane);
-        text = (JTextField)arr[0];
-        text.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enter");
-        AbstractAction sendMessage = new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String msg = text.getText();
-                if (msg.length() == 0) 
+        constructMessages();
+        Node[] arr = constructYourMessage();
+        text = (TextField)arr[0];
+        send = (Button)arr[1];
+        Procedure sendMessage = () -> {
+            String msg = text.getText();
+            if (msg.length() == 0) 
+                return;
+            client.send("MSG " + msg);
+            String ret;
+            synchronized (client.lock) {
+                ret = client.receive();
+            }
+            text.setText("");
+            switch (ret.split(" ")[0]) {
+                case "200":
+                    break;
+                case "401": //silent
+                    error("This channel is silent.", "Silent Channel");
                     return;
-                client.send("MSG " + msg);
-                String ret = client.receive();
-                text.setText("");
-                switch (ret.split(" ")[0]) {
-                    case "200":
-                        break;
-                    case "401": //silent
-                        error("This channel is silent.", "Silent Channel");
-                        return;
-                    case "405": //muted
-                        error("You have been muted.", "Muted");
-                        return;
-                }
-                messages.append(format(client.info.username, msg));
-                messages.update(messages.getGraphics());
+                case "405": //muted
+                    error("You have been muted.", "Muted");
+                    return;
             }
+            messages.getChildren().addAll(format(client.info.username, msg));
         };
-        text.getActionMap().put("enter", sendMessage);
-        send = (JButton)arr[1];
-        send.addActionListener(sendMessage);
-        //System.out.println(client);
-        addWindowFocusListener(new WindowAdapter() {
-            public void windowGainedFocus(WindowEvent e) {
-                text.requestFocusInWindow();
-            }
+        text.setOnKeyReleased((KeyEvent e) -> {
+            if (e.getCode() == KeyCode.ENTER)
+                sendMessage.run();
         });
-        pack();
-        setVisible(true);
-        //System.out.println(client.info.default_msg);
-        if (!client.info.disable_default_msg) info(client.info.default_msg, "Welcome!");
+        send.setOnAction((ActionEvent e) -> {
+            sendMessage.run();
+        });
+        if (!client.info.disable_default_msg) messages.getChildren().addAll(new Text((" " + client.info.default_msg).replaceAll("\n", "\n ")));
     }
     
     public static void main(String[] args) {
-        //ClientWindow cw = new ClientWindow(false, null);
-        //"this".substring(5);
+        new Thread(() -> lowlevel.Server.start("test.properties")).start();
+        launch(args);
     }
+}
+
+interface Procedure {
+    void run();
 }
