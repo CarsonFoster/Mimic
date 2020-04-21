@@ -35,7 +35,6 @@ public class ClientWindow extends Application implements Client {
     private lowlevel.Client client;
     private ScrollPane scroll;
     private static Stage stage;
-    protected static double listViewWidth;
     private final static String[] colors = new String[] {"RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "PINK", "ORANGE"};
     
     public int getWidth() {
@@ -172,6 +171,10 @@ public class ClientWindow extends Application implements Client {
         });
     }
     
+    private void welcomeMessage() {
+        if (!client.info.disable_default_msg) messages.getChildren().addAll(new Text((" " + client.info.default_msg).replaceAll("\n", "\n ")));
+    }
+    
     public ClientWindow() {
         this("localhost", 6464);
     }
@@ -181,10 +184,6 @@ public class ClientWindow extends Application implements Client {
         WIDTH = (int)(screensize.getWidth() * 3.0/7.0);
         HEIGHT = (int)(screensize.getHeight() * 2.0/3.0);
 
-        if (!lowlevel.Network.open(ip, port)) {
-            error("Could not connect to server.", "Connection Error");
-            return;
-        }
         client = lowlevel.Client.initiate(ip, port, this, x -> {
             String[] arr = x.split(" MSG ");
             String user = arr[0].substring(5), msg = "";
@@ -201,7 +200,10 @@ public class ClientWindow extends Application implements Client {
                 }
             );
         });
-        assert client != null : "Client is null";
+        if (client == null) {
+            error("Could not connect to server.", "Connection Error");
+            System.exit(1);
+        }
         ArrayList<String> tmp = client.info.channels;
         assert tmp != null : "Channels are null"; //should literally never happen
         String[] channels = tmp.toArray(new String[1]);
@@ -216,6 +218,7 @@ public class ClientWindow extends Application implements Client {
             }
             assert x1 == lowlevel.Error.NONE : "Fatal error: failed to change channels."; // help pls
             messages.getChildren().removeIf(x -> true);
+            if (newValue.equals("#welcome")) welcomeMessage();
         });
         constructMessages();
         Node[] arr = constructYourMessage();
@@ -250,11 +253,11 @@ public class ClientWindow extends Application implements Client {
         send.setOnAction((ActionEvent e) -> {
             sendMessage.run();
         });
-        if (!client.info.disable_default_msg) messages.getChildren().addAll(new Text((" " + client.info.default_msg).replaceAll("\n", "\n ")));
+        welcomeMessage();
     }
     
     public static void main(String[] args) {
-        new Thread(() -> lowlevel.Server.start("test.properties")).start();
+        //new Thread(() -> lowlevel.Server.start("test.properties")).start();
         launch(args);
     }
 }

@@ -52,9 +52,7 @@ public class Mimic {
     public static void main(String[] args) {
         //new Thread(() -> Server.start("test.properties")).start();
         //Client c = Client.initiate("localhost", 6464, new ConsoleClient(), x -> {System.out.println(x);});
-        //System.out.println(Client.scanParallel(6464));
-        //System.exit(0);
-        new gui.Main();
+        gui.Main.main(args);
     }
     
 }
