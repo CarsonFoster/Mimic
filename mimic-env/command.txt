@@ -1,0 +1,1 @@
+c:\Program Files\Java\jdk-9.0.4\bin>jlink --no-header-files --no-man-pages --compress=2 --module-path "c:\program files\java\jdk-9.0.4\jmods";c:\users\cwf\documents\mimic_git\Mimic\Mimic\build\modules --add-modules gui --output C:\users\cwf\Documents\mimic_git\Mimic\mimic-env
