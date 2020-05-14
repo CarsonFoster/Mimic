@@ -84,9 +84,10 @@ public class Server {
                     ClientWindow.error("Invalid port given.", "Invalid port");
                     return;
                 }
-                new Thread(() -> lowlevel.Server.start(path)).start();
+                new Thread(() -> lowlevel.Server.start(path), "ServerThreadByGUI").start();
                 stage.close();
-                new ClientWindow("127.0.0.1", port); // TODO: change when ClientWindow is made into JavaFX
+                ClientWindow.call("127.0.0.1", port); // TODO: change when ClientWindow is made into JavaFX
+                Stop.call();
             }          
         });
         return pane;

@@ -2,18 +2,13 @@ package lowlevel;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.*;
 
 public class Server {
     private static final int DEFAULT_PORT = 6464;
     public static int port;
-    public static boolean quit = false;
+    public volatile static boolean quit = false;
     protected static ConcurrentHashMap<Integer, Error> threadErrors = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> usernames = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, String> channels = new ConcurrentHashMap<>();
@@ -21,6 +16,7 @@ public class Server {
     protected static ConcurrentHashMap<String, List<String>> messages = new ConcurrentHashMap<>();
     protected static ConcurrentHashMap<Integer, Integer> indices = new ConcurrentHashMap<>(); // next to read
     protected static ConcurrentHashMap<Integer, Integer> ready = new ConcurrentHashMap<>();
+    protected static ArrayList<ServerThread> threads;
     protected static ArrayList<String> channelsList;// = new ArrayList<>();
     protected static List<String> forbiddenUsers;
     protected static List<String> mutedUsers;
@@ -28,6 +24,7 @@ public class Server {
     protected static List<String> silentChannels;
     protected final static Object lock = new Object();
     protected final static Object idsLock = new Object();
+    private static ServerSocket server;
     private static Properties props;
     
     public static Error start(String config) {
@@ -43,7 +40,7 @@ public class Server {
             System.out.println("Error in parsing port, using default port: " + DEFAULT_PORT + ".");
         }
         
-        ServerSocket server = null;
+        server = null;
         Socket client = null;
         
         try {
@@ -74,6 +71,7 @@ public class Server {
                 try {
                     Thread.sleep(10000);
                 } catch (InterruptedException e) {}
+                if (Server.quit) break;
                 synchronized (Server.lock) {
                     synchronized (Server.idsLock) {
                         for (String channel : Server.idsByChannel.keySet()) {
@@ -100,7 +98,9 @@ public class Server {
                     }
                 }
             }
+            System.out.println("Exiting Remover Guy.");
         }, "Remover Guy").start();
+        threads = new ArrayList<>();
         while (!quit) {
             try {
                 client = server.accept();
@@ -109,9 +109,29 @@ public class Server {
                 return Error.CLIENT_ACCEPT;
             }
             //System.out.println("Starting ServerThread.");
-            new ServerThread(client).start();
+            ServerThread st = new ServerThread(client);
+            threads.add(st);
+            st.start();
         }
+        System.out.println("Server exiting.");
         return Error.NONE;
+    }
+    
+    protected static synchronized void removeThread() {
+        threads.remove(0);
+    }
+    
+    public static synchronized void hardStop() {
+        quit = true;
+        try {
+            server.close();
+        } catch (Exception e) {}
+        while (threads.size() > 0) {
+            ServerThread st = threads.get(0);
+            st.shutdown();
+            removeThread();
+        }
+        System.exit(0);
     }
     
     protected static boolean checkUser(String username) { // true if useable, false otherwise
@@ -239,9 +259,34 @@ public class Server {
         return pairs;
     }
     
+     private static class SingleClient implements gui.Client {
+        private String name;
+        
+        protected SingleClient(String name) {
+            this.name = name;
+        }
+        
+        public void errorUsername() {
+            return;
+        }
+        
+        public String promptForUsername() {
+            return name;
+        }
+        
+        public void errorChannel() {}
+    }
+    
     public static void main(String[] args) {
-        props = load("test.properties");
-        System.out.println(getDefaultMessage());
+        new Thread(() -> Server.start("default.properties")).start();
+        Scanner cin = new Scanner(System.in);
+        Client c = Client.initiate("localhost", 6464, new SingleClient("cwf"), x -> {System.out.println(x);});
+        while (!cin.hasNextLine()) {}
+        System.out.println("Got input");
+        Server.hardStop();
+        
+        //props = load("test.properties");
+        //System.out.println(getDefaultMessage());
         //System.out.println("poopoohead:#welcome,#general;peepeehead:#welcome;".matches("([A-Za-z0-9_]{3,25}:#[a-zA-Z]{1,15}(,#[a-zA-Z]{1,15})*;)+"));
     }
     
