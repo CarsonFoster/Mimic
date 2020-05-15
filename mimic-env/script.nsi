@@ -75,7 +75,7 @@ Section "uninstall"
 	Delete $INSTDIR\command.txt
 	RMDir /r $INSTDIR\bin
 	RMDir /r $INSTDIR\conf
-	RMDir /r $INSTDIR\dist
+	#RMDir /r $INSTDIR\dist
 	RMDir /r $INSTDIR\legal
 	RMDir /r $INSTDIR\lib
 	IfFileExists $SMPROGRAMS\Mimic.lnk 0 +2
