@@ -67,11 +67,20 @@ LangString DESC_DesktopShortcut ${LANG_ENGLISH} "The Desktop shortcut to start M
 Section "uninstall"
 	# $INSTDIR will refer to the Mimic sub directory, so it's ok
 	Delete $INSTDIR\uninstall.exe
-	Delete $INSTDIR\README.md
+	Delete $INSTDIR\release
+	Delete $INSTDIR\README.MD
+	Delete $INSTDIR\mimic.exe
+	Delete $INSTDIR\LICENSE
+	Delete $INSTDIR\default.properties
+	Delete $INSTDIR\command.txt
+	RMDir /r $INSTDIR\bin
+	RMDir /r $INSTDIR\conf
+	RMDir /r $INSTDIR\dist
+	RMDir /r $INSTDIR\legal
+	RMDir /r $INSTDIR\lib
 	IfFileExists $SMPROGRAMS\Mimic.lnk 0 +2
 		Delete $SMPROGRAMS\Mimic.lnk
 	IfFileExists $DESKTOP\Mimic.lnk 0 +2
 		Delete $DESKTOP\Mimic.lnk
 	RMDir $INSTDIR
-	#Delete "$SMPROGRAMS\Mimic.lnk" # start menu shortcut 
 SectionEnd
