@@ -3,6 +3,7 @@ package lowlevel;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -26,11 +27,19 @@ public class Client {
     }
     
     public static String getLocalIP() {
+        NetworkInterface nic = null;
         try {
-            return Inet4Address.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            return null;
-        }
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface i = interfaces.nextElement();
+                if (i.isUp() && !i.isLoopback() && !i.isVirtual() && !i.getDisplayName().contains("Virtual")) {
+                    nic = i;
+                    break;
+                }
+            }
+        } catch (Exception e) {}
+        if (nic == null) return null;
+        return nic.getInetAddresses().nextElement().getHostAddress();
     }
     
     public static int getNetmaskLength() { //NVM ignore: TODO: note: only returns first available non-loopback, non-virtual, up network interface

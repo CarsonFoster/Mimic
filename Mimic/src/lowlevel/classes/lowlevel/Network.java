@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Network {
@@ -48,6 +49,7 @@ public class Network {
         for (int i = 0; i < addresses; i++)
             list.add(prefix);
         generate(0, list.size() - 1, list);
+        list = list.stream().filter(x -> !x.matches(".*((\\.0)|(\\.254)|(\\.255))")).collect(Collectors.toList());
     }
     
     private void generate(int start, int end, List<String> l) {
@@ -68,14 +70,19 @@ public class Network {
     }
     
     public static boolean open(String host, int port) {
+        return open(host, port, TIMEOUT);
+    }
+    
+    public static boolean open(String host, int port, int timeout) {
         boolean open = false;
         try {
             Socket s = new Socket();
-            s.connect(new InetSocketAddress(host, port), TIMEOUT);
+            s.connect(new InetSocketAddress(host, port), timeout);
             open = true;
             s.close();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            if (open) return open;
+        }
         return open;
-    }
-    
+    }    
 }

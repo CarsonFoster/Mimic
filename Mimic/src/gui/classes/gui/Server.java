@@ -85,7 +85,8 @@ public class Server {
                 }
                 new Thread(() -> lowlevel.Server.start(path)).start();
                 stage.close();
-                ClientWindow.call("127.0.0.1", port); // TODO: change when ClientWindow is made into JavaFX
+                ClientWindow.call("127.0.0.1", port);
+                Stop.call();
             }          
         });
         return pane;

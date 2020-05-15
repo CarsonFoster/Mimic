@@ -156,7 +156,7 @@ public class ClientWindow extends Application implements lowlevel.ClientInterfac
     public void start(Stage primaryStage) throws Exception {
         ClientWindow.stage = primaryStage;
         
-        stage.setTitle("Mimic: " + client.info.username);
+        stage.setTitle("Mimic on " + lowlevel.Client.getLocalIP() + ": " + client.info.username);
         stage.setResizable(false);
         stage.setWidth(WIDTH);
         stage.setHeight(HEIGHT);
