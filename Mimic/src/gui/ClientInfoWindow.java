@@ -71,7 +71,7 @@ public class ClientInfoWindow extends Application {
                 return;
             }
             stage.close();
-            new ClientWindow(ip, port);
+            ClientWindow.call(ip, port, false);
         });
         
         return pane;
@@ -101,7 +101,7 @@ public class ClientInfoWindow extends Application {
         b.setOnAction(e ->  {
             String ip = list.getSelectionModel().getSelectedItem();
             stage.close();
-            new ClientWindow(ip, networkScanPort);       
+            ClientWindow.call(ip, networkScanPort, false);       
         });
         
         return pane;

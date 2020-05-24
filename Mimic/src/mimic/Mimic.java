@@ -43,6 +43,7 @@ public class Mimic {
         }
         
         public String promptForUsername() {
+            System.out.println("Username: " + name);
             return name;
         }
         
@@ -50,8 +51,15 @@ public class Mimic {
     }
     
     public static void main(String[] args) {
-        //new Thread(() -> Server.start("test.properties")).start();
-        //Client c = Client.initiate("localhost", 6464, new ConsoleClient(), x -> {System.out.println(x);});
+        /*new Thread(() -> Server.start("test.properties")).start();
+        Client c = Client.initiate("localhost", 6464, new SingleClient("cwf"), x -> {System.out.println(x);});
+        Client d = Client.initiate("localhost", 6464, new SingleClient("not_cwf"), x -> {System.out.println(x);});
+        c.changeChannel("#general");
+        d.changeChannel("#general");
+        c.send("MSG Hello, not_cwf. This is a test of the basic client/server functionality.");
+        System.out.println(c.receive());
+        d.send("MSG Hello, this is no_cwf.");
+        System.out.println(d.receive());*/
         gui.Main.main(args);
     }
     

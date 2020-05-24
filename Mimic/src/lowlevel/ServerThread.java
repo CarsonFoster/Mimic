@@ -56,6 +56,7 @@ public class ServerThread extends Thread {
         if (username == null) {
             //shutdown();
             System.out.println("Exiting thread " + id + " because of null username. Probably a test connection.");
+            Server.threads.remove(this);
             return;
         }
         while (!Server.checkUser(username)) {
