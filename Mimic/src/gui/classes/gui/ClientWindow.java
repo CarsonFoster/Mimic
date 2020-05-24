@@ -36,6 +36,7 @@ public class ClientWindow extends Application implements lowlevel.ClientInterfac
     private ScrollPane scroll;
     private static Stage stage;
     private final static String[] colors = new String[] {"RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "PINK", "ORANGE"};
+    private boolean server = false;
     
     public int getWidth() {
         return WIDTH;
@@ -144,9 +145,9 @@ public class ClientWindow extends Application implements lowlevel.ClientInterfac
         return new Text[] {time, u, m};
     }
     
-    public static void call(String ip, int port) {
+    public static void call(String ip, int port, boolean s) {
         try {
-            new ClientWindow(ip, port).start(new Stage());
+            new ClientWindow(ip, port, s).start(new Stage());
         } catch (Exception e) {
             ClientWindow.error("Failed to start Server GUI.", "GUI Failed to Start");
         }
@@ -169,6 +170,16 @@ public class ClientWindow extends Application implements lowlevel.ClientInterfac
             if (newValue == true)
                 text.requestFocus();
         });
+        
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent t) {
+                if (!server) {
+                    Platform.exit();
+                    System.exit(0);
+                }
+            }
+        });
     }
     
     private void welcomeMessage() {
@@ -176,14 +187,16 @@ public class ClientWindow extends Application implements lowlevel.ClientInterfac
     }
     
     public ClientWindow() {
-        this("localhost", 6464);
+        this("localhost", 6464, true);
     }
     
-    public ClientWindow(String ip, int port) {
+    public ClientWindow(String ip, int port, boolean s) {
         Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
         WIDTH = (int)(screensize.getWidth() * 3.0/7.0);
         HEIGHT = (int)(screensize.getHeight() * 2.0/3.0);
 
+        server = s;
+        
         client = lowlevel.Client.initiate(ip, port, this, x -> {
             String[] arr = x.split(" MSG ");
             String user = arr[0].substring(5), msg = "";

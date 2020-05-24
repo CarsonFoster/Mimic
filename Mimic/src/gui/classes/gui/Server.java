@@ -85,7 +85,7 @@ public class Server {
                 }
                 new Thread(() -> lowlevel.Server.start(path)).start();
                 stage.close();
-                ClientWindow.call("127.0.0.1", port);
+                ClientWindow.call("127.0.0.1", port, true);
                 Stop.call();
             }          
         });

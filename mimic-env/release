@@ -1,2 +1,2 @@
 JAVA_VERSION="9.0.4"
-MODULES="java.base java.datatransfer java.xml java.prefs java.desktop javafx.base jdk.jsobject javafx.graphics javafx.controls trim lowlevel gui"
+MODULES="java.base java.datatransfer java.xml java.prefs java.desktop javafx.base trim lowlevel jdk.jsobject javafx.graphics javafx.controls gui"
